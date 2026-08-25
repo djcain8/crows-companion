@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getSupabaseEnvironment } from "./env";
+import { getSupabaseEnvironment, hasSupabaseEnvironment } from "./env";
 
 const originalEnvironment = { ...process.env };
 
@@ -23,6 +23,6 @@ describe("getSupabaseEnvironment", () => {
       url: "https://example.supabase.co",
       publishableKey: "public-key",
     });
+    expect(hasSupabaseEnvironment()).toBe(true);
   });
 });
-

@@ -3,6 +3,12 @@ type SupabaseEnvironment = {
   publishableKey: string;
 };
 
+export function hasSupabaseEnvironment(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  );
+}
+
 export function getSupabaseEnvironment(): SupabaseEnvironment {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -15,4 +21,3 @@ export function getSupabaseEnvironment(): SupabaseEnvironment {
 
   return { url, publishableKey };
 }
-

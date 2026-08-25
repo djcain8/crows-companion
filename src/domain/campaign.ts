@@ -25,7 +25,37 @@ export type Campaign = {
   treasuryGc: number;
 };
 
+export type CharacterSummary = {
+  id: string;
+  name: string;
+  playerName: string | null;
+  wounds: number;
+  txp: number;
+  goldGc: number;
+  summary: string | null;
+};
+
+export type InstitutionSummary = {
+  id: string;
+  kind: InstitutionKind;
+  name: string;
+  stewardName: string | null;
+  level: number;
+  status: string;
+  details: Record<string, unknown>;
+};
+
+export type CampaignOverview = Campaign & {
+  currentEvent: string | null;
+  preset: string | null;
+  characters: CharacterSummary[];
+  institutions: InstitutionSummary[];
+};
+
 export function isValidProsperity(value: number): boolean {
   return Number.isInteger(value) && value >= -10 && value <= 10;
 }
 
+export function calculatePooledGold(characters: CharacterSummary[]): number {
+  return characters.reduce((total, character) => total + character.goldGc, 0);
+}
