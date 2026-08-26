@@ -1,6 +1,24 @@
 export const characterStatuses = ["active", "dead", "retired", "archived"] as const;
 export type CharacterStatus = (typeof characterStatuses)[number];
 
+export const backgrounds = [
+  "Acolyte of the Gardner", "Acolyte of the Healer", "Acolyte of the Smith",
+  "Acolyte of the Three", "Acolyte of the Warrior", "Alchemist", "Apprentice Mage",
+  "Archer", "Assassin", "Beggar", "Blacksmith", "Bodyguard", "Cartographer",
+  "Conjurer", "Cook", "Duelist", "Entertainer", "Executioner", "Farmer", "Gladiator",
+  "Hunter", "Hydromancer", "Illusionist", "Keraunomancer", "Knight", "Merchant",
+  "Miner", "Noble", "Pugilist", "Pyromancer", "Sage", "Soldier", "Thief", "Tinkerer",
+  "Transmuter", "Village Watch",
+] as const;
+
+export const expertiseNames = [
+  "Alchemy", "Alteration", "Athletics", "Bashing", "Benefaction", "Blacksmithing",
+  "Bow", "Chopping", "Conjuration", "Elemental", "Enchanting", "Endurance", "Gymnastics",
+  "Handle Pet", "Historical Lore", "Illusion", "Lift", "Magic Lore", "Monster Lore",
+  "Nature Lore", "Navigate", "Necromancy", "Pick Lock", "Religious Lore", "Search",
+  "Slashing", "Stabbing", "Stealth", "Thievery", "Unarmed",
+] as const;
+
 export type ExpertiseEntry = { name: string; uses: number };
 export type TraitEntry = { name: string; tree: string | null };
 
@@ -35,10 +53,10 @@ export function parseNamedLines(value: string): string[] {
 
 export function parseExpertises(value: string): ExpertiseEntry[] {
   return parseNamedLines(value).map((entry) => {
-    const match = entry.match(/^(.*?)(?:\s*[:(]\s*(\d+)\s*\)?)?$/);
+    const match = entry.match(/^(.*?)(?:\s*[:(]\s*(-?\d+)\s*\)?)?$/);
     const name = match?.[1]?.trim() || entry;
     const uses = Number(match?.[2] ?? 1);
-    return { name, uses: Math.max(1, Math.min(4, uses)) };
+    return { name, uses: Math.max(0, uses) };
   });
 }
 

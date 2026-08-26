@@ -1,5 +1,6 @@
-import { characterStatuses, type CharacterRecord } from "@/domain/character";
+import { backgrounds, characterStatuses, type CharacterRecord } from "@/domain/character";
 import { createCharacter, updateCharacter } from "./actions";
+import { ExpertiseField, TraitField } from "./structured-list-field";
 
 function Field({ label, name, defaultValue, type = "text", min, max, required, hint }: {
   label: string;
@@ -22,8 +23,7 @@ function Field({ label, name, defaultValue, type = "text", min, max, required, h
 
 export function CharacterForm({ character }: { character?: CharacterRecord }) {
   const action = character ? updateCharacter.bind(null, character.id) : createCharacter;
-  const expertiseText = character?.expertises.map((entry) => `${entry.name}: ${entry.uses}`).join("\n") ?? "";
-  const traitText = character?.traits.map((entry) => entry.tree ? `${entry.tree}: ${entry.name}` : entry.name).join("\n") ?? "";
+  const backgroundListId = `backgrounds-${character?.id ?? "new"}`;
 
   return (
     <form action={action} className="character-form">
@@ -32,7 +32,12 @@ export function CharacterForm({ character }: { character?: CharacterRecord }) {
         <div className="form-grid two-columns">
           <Field label="Crow name" name="name" required defaultValue={character?.name} />
           <Field label="Player" name="player_name" defaultValue={character?.playerName} />
-          <Field label="Background" name="background" defaultValue={character?.background} />
+          <label className="registry-field">
+            <span>Background</span>
+            <input name="background" list={backgroundListId} defaultValue={character?.background ?? ""} placeholder="Search backgrounds…" />
+            <datalist id={backgroundListId}>{backgrounds.map((background) => <option value={background} key={background} />)}</datalist>
+            <small>Choose one of the 36 playtest backgrounds.</small>
+          </label>
           <label className="registry-field">
             <span>Status</span>
             <select name="status" defaultValue={character?.status ?? "active"}>
@@ -56,7 +61,7 @@ export function CharacterForm({ character }: { character?: CharacterRecord }) {
           <Field label="Agility" name="agility" type="number" min={-1} max={4} defaultValue={character?.agility ?? 0} />
           <Field label="Mind" name="mind" type="number" min={-1} max={4} defaultValue={character?.mind ?? 0} />
           <Field label="Strength" name="strength" type="number" min={-1} max={4} defaultValue={character?.strength ?? 0} />
-          <Field label="Current Stamina" name="stamina_current" type="number" min={0} defaultValue={character?.staminaCurrent ?? 0} />
+          {character && <Field label="Current Stamina" name="stamina_current" type="number" min={0} defaultValue={character.staminaCurrent} />}
           <Field label="Maximum Stamina" name="stamina_max" type="number" min={0} defaultValue={character?.staminaMax ?? 0} />
           <Field label="Base Speed" name="base_speed" type="number" min={0} defaultValue={character?.baseSpeed ?? 5} hint="Temporary effects and Wound penalties come later." />
           <Field label="Total XP (TXP)" name="txp" type="number" min={0} defaultValue={character?.txp ?? 0} />
@@ -66,16 +71,8 @@ export function CharacterForm({ character }: { character?: CharacterRecord }) {
       </section>
 
       <section className="form-section split-section">
-        <label className="registry-field">
-          <span>Expertises</span>
-          <textarea name="expertises" rows={6} defaultValue={expertiseText} placeholder={'Search: 2\nNavigate: 1'} />
-          <small>One per line. Add uses after a colon; defaults to 1.</small>
-        </label>
-        <label className="registry-field">
-          <span>Traits</span>
-          <textarea name="traits" rows={6} defaultValue={traitText} placeholder={'Travel: Orienteering\nMidnight Oil'} />
-          <small>One per line. Optionally prefix the trait tree.</small>
-        </label>
+        <ExpertiseField initialEntries={character?.expertises ?? []} />
+        <TraitField initialEntries={character?.traits ?? []} />
       </section>
 
       <section className="form-section">

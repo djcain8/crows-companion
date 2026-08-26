@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   characterStatuses,
+  backgrounds,
+  expertiseNames,
   integerFromForm,
   optionalText,
   parseExpertises,
@@ -29,12 +31,20 @@ function characterValues(formData: FormData) {
 
   const staminaMax = boundedInteger(formData, "stamina_max", 0, 0, 999);
   const txp = boundedInteger(formData, "txp", 0, 0, 9999999);
+  const background = optionalText(formData.get("background"));
+  if (background && !backgrounds.includes(background as (typeof backgrounds)[number])) {
+    throw new Error("Choose a background from the playtest list.");
+  }
+  const expertises = parseExpertises(optionalText(formData.get("expertises")) ?? "");
+  if (expertises.some((expertise) => !expertiseNames.includes(expertise.name as (typeof expertiseNames)[number]))) {
+    throw new Error("Choose expertises from the rules list.");
+  }
 
   return {
     name,
     player_name: optionalText(formData.get("player_name")),
     distinguishing_feature: optionalText(formData.get("distinguishing_feature")),
-    background: optionalText(formData.get("background")),
+    background,
     status,
     is_active: status === "active",
     agility: boundedInteger(formData, "agility", 0, -1, 4),
@@ -50,7 +60,7 @@ function characterValues(formData: FormData) {
     connection_name: optionalText(formData.get("connection_name")),
     connection_relationship: optionalText(formData.get("connection_relationship")),
     connection_benefit: optionalText(formData.get("connection_benefit")),
-    expertises: parseExpertises(optionalText(formData.get("expertises")) ?? ""),
+    expertises,
     traits: parseTraits(optionalText(formData.get("traits")) ?? ""),
   };
 }

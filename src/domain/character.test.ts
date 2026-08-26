@@ -6,11 +6,13 @@ describe("character form parsing", () => {
     expect(parseNamedLines("Search, Navigate\nSearch\n  ")).toEqual(["Search", "Navigate"]);
   });
 
-  it("parses expertise uses and clamps them to rules limits", () => {
-    expect(parseExpertises("Search: 2\nNavigate (9)\nLore")).toEqual([
+  it("parses expertise uses as non-negative integers without enforcing advancement rules", () => {
+    expect(parseExpertises("Search: 2\nNavigate (9)\nLore\nStealth: 0\nLift: -2")).toEqual([
       { name: "Search", uses: 2 },
-      { name: "Navigate", uses: 4 },
+      { name: "Navigate", uses: 9 },
       { name: "Lore", uses: 1 },
+      { name: "Stealth", uses: 0 },
+      { name: "Lift", uses: 0 },
     ]);
   });
 
