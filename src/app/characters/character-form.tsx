@@ -24,6 +24,7 @@ function Field({ label, name, defaultValue, type = "text", min, max, required, h
 export function CharacterForm({ character }: { character?: CharacterRecord }) {
   const action = character ? updateCharacter.bind(null, character.id) : createCharacter;
   const backgroundListId = `backgrounds-${character?.id ?? "new"}`;
+  const backgroundPattern = backgrounds.join("|");
 
   return (
     <form action={action} className="character-form">
@@ -34,7 +35,7 @@ export function CharacterForm({ character }: { character?: CharacterRecord }) {
           <Field label="Player" name="player_name" defaultValue={character?.playerName} />
           <label className="registry-field">
             <span>Background</span>
-            <input name="background" list={backgroundListId} defaultValue={character?.background ?? ""} placeholder="Search backgrounds…" />
+            <input name="background" list={backgroundListId} pattern={backgroundPattern} title="Choose a background from the playtest list." defaultValue={character?.background ?? ""} placeholder="Search backgrounds…" />
             <datalist id={backgroundListId}>{backgrounds.map((background) => <option value={background} key={background} />)}</datalist>
             <small>Choose one of the 36 playtest backgrounds.</small>
           </label>

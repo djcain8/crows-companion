@@ -67,6 +67,7 @@ button,a,summary { -webkit-tap-highlight-color:transparent; }
 .registry-header>a { flex:none; padding:.8rem 1rem; border:1px solid var(--line); color:var(--parchment); text-decoration:none; font:700 .68rem Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
 .registry-header>a:hover { border-color:var(--ember); color:var(--ember-bright); }
 .notice { max-width:76rem; margin:0 auto 1rem; padding:.8rem 1rem; border:1px solid #67503d; background:#39281e; color:#f0c695; }
+.notice.error-notice { border-color:#7f3e42; background:#3d1d22; color:#f1a2a3; }
 .registry-summary { max-width:76rem; margin:0 auto 1.25rem; display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--line); background:#0e0c0f; }
 .registry-summary>div { min-height:5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1.25rem; border-right:1px solid var(--line); }
 .registry-summary>div:last-child { border:0; }.registry-summary span{color:var(--muted);font:700 .65rem Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.registry-summary strong{color:var(--ember-bright);font-size:1.35rem;font-weight:500}

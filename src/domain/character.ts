@@ -19,6 +19,10 @@ export const expertiseNames = [
   "Slashing", "Stabbing", "Stealth", "Thievery", "Unarmed",
 ] as const;
 
+export function isBackground(value: string): value is (typeof backgrounds)[number] {
+  return backgrounds.includes(value as (typeof backgrounds)[number]);
+}
+
 export type ExpertiseEntry = { name: string; uses: number };
 export type TraitEntry = { name: string; tree: string | null };
 

@@ -4,12 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   characterStatuses,
-  backgrounds,
   expertiseNames,
   integerFromForm,
   optionalText,
   parseExpertises,
   parseTraits,
+  isBackground,
   type CharacterStatus,
 } from "@/domain/character";
 import { createClient } from "@/lib/supabase/server";
@@ -32,7 +32,7 @@ function characterValues(formData: FormData) {
   const staminaMax = boundedInteger(formData, "stamina_max", 0, 0, 999);
   const txp = boundedInteger(formData, "txp", 0, 0, 9999999);
   const background = optionalText(formData.get("background"));
-  if (background && !backgrounds.includes(background as (typeof backgrounds)[number])) {
+  if (background && !isBackground(background)) {
     throw new Error("Choose a background from the playtest list.");
   }
   const expertises = parseExpertises(optionalText(formData.get("expertises")) ?? "");
@@ -71,25 +71,34 @@ function finishMutation(message: string) {
   redirect(`/characters?notice=${encodeURIComponent(message)}`);
 }
 
-export async function createCharacter(formData: FormData) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("characters").insert({
-    campaign_id: GADWICK_CAMPAIGN_ID,
-    ...characterValues(formData),
-  });
+function failureMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unable to save the character.";
+}
 
-  if (error) throw new Error(`Unable to create character: ${error.message}`);
+function redirectFailure(error: unknown): never {
+  redirect(`/characters?error=${encodeURIComponent(failureMessage(error))}`);
+}
+
+export async function createCharacter(formData: FormData) {
+  try {
+    const values = characterValues(formData);
+    const supabase = await createClient();
+    const { error } = await supabase.from("characters").insert({ campaign_id: GADWICK_CAMPAIGN_ID, ...values });
+    if (error) throw new Error(`Unable to create character: ${error.message}`);
+  } catch (error) {
+    redirectFailure(error);
+  }
   finishMutation("Crow added to Gadwick.");
 }
 
 export async function updateCharacter(characterId: string, formData: FormData) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("characters")
-    .update(characterValues(formData))
-    .eq("id", characterId)
-    .eq("campaign_id", GADWICK_CAMPAIGN_ID);
-
-  if (error) throw new Error(`Unable to update character: ${error.message}`);
+  try {
+    const values = characterValues(formData);
+    const supabase = await createClient();
+    const { error } = await supabase.from("characters").update(values).eq("id", characterId).eq("campaign_id", GADWICK_CAMPAIGN_ID);
+    if (error) throw new Error(`Unable to update character: ${error.message}`);
+  } catch (error) {
+    redirectFailure(error);
+  }
   finishMutation("Character saved.");
 }

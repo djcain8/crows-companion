@@ -4,7 +4,7 @@ import { CharacterForm } from "./character-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function CharactersPage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
+export default async function CharactersPage({ searchParams }: { searchParams: Promise<{ notice?: string; error?: string }> }) {
   const [characters, params] = await Promise.all([getCharacterRegistry(), searchParams]);
   const activeCount = characters.filter((character) => character.status === "active").length;
 
@@ -20,6 +20,7 @@ export default async function CharactersPage({ searchParams }: { searchParams: P
       </header>
 
       {params.notice && <p className="notice" role="status">{params.notice}</p>}
+      {params.error && <p className="notice error-notice" role="alert">{params.error}</p>}
 
       <section className="registry-summary" aria-label="Roster summary">
         <div><span>Active Crows</span><strong>{activeCount}</strong></div>

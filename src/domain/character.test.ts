@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { integerFromForm, optionalText, parseExpertises, parseNamedLines, parseTraits } from "./character";
+import { integerFromForm, isBackground, optionalText, parseExpertises, parseNamedLines, parseTraits } from "./character";
 
 describe("character form parsing", () => {
   it("normalizes and deduplicates flexible lists", () => {
@@ -28,5 +28,10 @@ describe("character form parsing", () => {
     expect(integerFromForm("twelve", 5)).toBe(5);
     expect(optionalText("  ")).toBeNull();
     expect(optionalText(" Crow ")).toBe("Crow");
+  });
+
+  it("recognizes only playtest backgrounds", () => {
+    expect(isBackground("Cartographer")).toBe(true);
+    expect(isBackground("Cartographer!!!")).toBe(false);
   });
 });
