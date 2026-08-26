@@ -32,7 +32,7 @@ export function CharacterForm({ character }: { character?: CharacterRecord }) {
         <div className="form-grid two-columns">
           <Field label="Crow name" name="name" required defaultValue={character?.name} />
           <Field label="Player" name="player_name" defaultValue={character?.playerName} />
-          <Field label="Background" name="background" defaultValue={character?.background} hint="The rules use backgrounds, not classes." />
+          <Field label="Background" name="background" defaultValue={character?.background} />
           <label className="registry-field">
             <span>Status</span>
             <select name="status" defaultValue={character?.status ?? "active"}>
