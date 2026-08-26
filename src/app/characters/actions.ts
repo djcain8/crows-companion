@@ -1,0 +1,85 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import {
+  characterStatuses,
+  integerFromForm,
+  optionalText,
+  parseExpertises,
+  parseTraits,
+  type CharacterStatus,
+} from "@/domain/character";
+import { createClient } from "@/lib/supabase/server";
+
+const GADWICK_CAMPAIGN_ID = "00000000-0000-4000-8000-000000000001";
+
+function boundedInteger(formData: FormData, name: string, fallback: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, integerFromForm(formData.get(name), fallback)));
+}
+
+function characterValues(formData: FormData) {
+  const name = optionalText(formData.get("name"));
+  if (!name) throw new Error("Character name is required.");
+
+  const requestedStatus = optionalText(formData.get("status"));
+  const status: CharacterStatus = characterStatuses.includes(requestedStatus as CharacterStatus)
+    ? (requestedStatus as CharacterStatus)
+    : "active";
+
+  const staminaMax = boundedInteger(formData, "stamina_max", 0, 0, 999);
+  const txp = boundedInteger(formData, "txp", 0, 0, 9999999);
+
+  return {
+    name,
+    player_name: optionalText(formData.get("player_name")),
+    distinguishing_feature: optionalText(formData.get("distinguishing_feature")),
+    background: optionalText(formData.get("background")),
+    status,
+    is_active: status === "active",
+    agility: boundedInteger(formData, "agility", 0, -1, 4),
+    mind: boundedInteger(formData, "mind", 0, -1, 4),
+    strength: boundedInteger(formData, "strength", 0, -1, 4),
+    stamina_current: boundedInteger(formData, "stamina_current", staminaMax, 0, 999),
+    stamina_max: staminaMax,
+    base_speed: boundedInteger(formData, "base_speed", 5, 0, 99),
+    txp,
+    spent_xp: boundedInteger(formData, "spent_xp", 0, 0, txp),
+    gold_gc: boundedInteger(formData, "gold_gc", 0, 0, 999999999),
+    summary: optionalText(formData.get("summary")),
+    connection_name: optionalText(formData.get("connection_name")),
+    connection_relationship: optionalText(formData.get("connection_relationship")),
+    connection_benefit: optionalText(formData.get("connection_benefit")),
+    expertises: parseExpertises(optionalText(formData.get("expertises")) ?? ""),
+    traits: parseTraits(optionalText(formData.get("traits")) ?? ""),
+  };
+}
+
+function finishMutation(message: string) {
+  revalidatePath("/");
+  revalidatePath("/characters");
+  redirect(`/characters?notice=${encodeURIComponent(message)}`);
+}
+
+export async function createCharacter(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("characters").insert({
+    campaign_id: GADWICK_CAMPAIGN_ID,
+    ...characterValues(formData),
+  });
+
+  if (error) throw new Error(`Unable to create character: ${error.message}`);
+  finishMutation("Crow added to Gadwick.");
+}
+
+export async function updateCharacter(characterId: string, formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("characters")
+    .update(characterValues(formData))
+    .eq("id", characterId)
+    .eq("campaign_id", GADWICK_CAMPAIGN_ID);
+
+  if (error) throw new Error(`Unable to update character: ${error.message}`);
+  finishMutation("Character saved.");
+}
