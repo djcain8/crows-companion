@@ -1,7 +1,7 @@
 import type { CampaignOverview, InstitutionKind } from "@/domain/campaign";
 import { hasSupabaseEnvironment } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
-import { characterStatuses, type CharacterRecord, type CharacterStatus, type ExpertiseEntry, type TraitEntry } from "@/domain/character";
+import { characterStatuses, normalizeInventory, type CharacterRecord, type CharacterStatus, type ExpertiseEntry, type TraitEntry } from "@/domain/character";
 
 const institutionKinds = new Set<string>([
   "alchemist", "auction_house", "barracks", "beacon", "blacksmith", "bookseller",
@@ -74,7 +74,7 @@ export async function getCharacterRegistry(): Promise<CharacterRecord[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("characters")
-    .select("id, campaign_id, name, player_name, distinguishing_feature, background, status, agility, mind, strength, stamina_current, stamina_max, base_speed, txp, spent_xp, gold_gc, summary, connection_name, connection_relationship, connection_benefit, expertises, traits")
+    .select("id, campaign_id, name, player_name, distinguishing_feature, background, status, agility, mind, strength, stamina_current, stamina_max, base_speed, txp, spent_xp, gold_gc, summary, connection_name, connection_relationship, connection_benefit, expertises, traits, inventory")
     .eq("campaign_id", "00000000-0000-4000-8000-000000000001")
     .order("sort_order")
     .order("created_at");
@@ -104,5 +104,6 @@ export async function getCharacterRegistry(): Promise<CharacterRecord[]> {
     connectionBenefit: row.connection_benefit,
     expertises: row.expertises as ExpertiseEntry[],
     traits: row.traits as TraitEntry[],
+    inventory: normalizeInventory(row.inventory),
   }));
 }

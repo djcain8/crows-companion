@@ -10,11 +10,31 @@ import {
   parseExpertises,
   parseTraits,
   isBackground,
+  inventorySlotCounts,
+  type CharacterInventory,
+  type InventorySlot,
   type CharacterStatus,
 } from "@/domain/character";
 import { createClient } from "@/lib/supabase/server";
 
 const GADWICK_CAMPAIGN_ID = "00000000-0000-4000-8000-000000000001";
+
+function inventorySlots(formData: FormData, group: keyof typeof inventorySlotCounts): InventorySlot[] {
+  return Array.from({ length: inventorySlotCounts[group] }, (_, index) => {
+    const name = optionalText(formData.get(`inventory_${group}_${index}`));
+    if (!name) return null;
+    const requestedKind = formData.get(`inventory_${group}_${index}_kind`);
+    return { name, kind: group === "backpack" && requestedKind === "wound" ? "wound" : "item" };
+  });
+}
+
+function inventoryValues(formData: FormData): CharacterInventory {
+  return {
+    hands: inventorySlots(formData, "hands"),
+    belt: inventorySlots(formData, "belt"),
+    backpack: inventorySlots(formData, "backpack"),
+  };
+}
 
 function boundedInteger(formData: FormData, name: string, fallback: number, min: number, max: number) {
   return Math.min(max, Math.max(min, integerFromForm(formData.get(name), fallback)));
@@ -65,10 +85,11 @@ function characterValues(formData: FormData) {
   };
 }
 
-function finishMutation(message: string) {
+function finishMutation(message: string, characterId?: string) {
   revalidatePath("/");
   revalidatePath("/characters");
-  redirect(`/characters?notice=${encodeURIComponent(message)}`);
+  const selectedCharacter = characterId ? `&character=${encodeURIComponent(characterId)}#character-${encodeURIComponent(characterId)}` : "";
+  redirect(`/characters?notice=${encodeURIComponent(message)}${selectedCharacter}`);
 }
 
 function failureMessage(error: unknown): string {
@@ -100,5 +121,25 @@ export async function updateCharacter(characterId: string, formData: FormData) {
   } catch (error) {
     redirectFailure(error);
   }
-  finishMutation("Character saved.");
+  finishMutation("Character saved.", characterId);
+}
+
+export async function updatePlaySheet(characterId: string, staminaMax: number, formData: FormData) {
+  try {
+    const values = {
+      stamina_current: boundedInteger(formData, "stamina_current", staminaMax, 0, staminaMax),
+      gold_gc: boundedInteger(formData, "gold_gc", 0, 0, 999999999),
+      inventory: inventoryValues(formData),
+    };
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("characters")
+      .update(values)
+      .eq("id", characterId)
+      .eq("campaign_id", GADWICK_CAMPAIGN_ID);
+    if (error) throw new Error(`Unable to update field kit: ${error.message}`);
+  } catch (error) {
+    redirectFailure(error);
+  }
+  finishMutation("Field kit saved.", characterId);
 }

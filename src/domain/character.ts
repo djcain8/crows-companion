@@ -25,6 +25,44 @@ export function isBackground(value: string): value is (typeof backgrounds)[numbe
 
 export type ExpertiseEntry = { name: string; uses: number };
 export type TraitEntry = { name: string; tree: string | null };
+export type InventoryEntry = { name: string; kind: "item" | "wound" };
+export type InventorySlot = InventoryEntry | null;
+export type CharacterInventory = {
+  hands: InventorySlot[];
+  belt: InventorySlot[];
+  backpack: InventorySlot[];
+};
+
+export const inventorySlotCounts = { hands: 2, belt: 4, backpack: 10 } as const;
+
+export function emptyInventory(): CharacterInventory {
+  return {
+    hands: Array(inventorySlotCounts.hands).fill(null),
+    belt: Array(inventorySlotCounts.belt).fill(null),
+    backpack: Array(inventorySlotCounts.backpack).fill(null),
+  };
+}
+
+function normalizedSlots(value: unknown, count: number, allowWounds: boolean): InventorySlot[] {
+  const source = Array.isArray(value) ? value : [];
+  return Array.from({ length: count }, (_, index) => {
+    const entry = source[index];
+    if (!entry || typeof entry !== "object") return null;
+    const name = "name" in entry && typeof entry.name === "string" ? entry.name.trim() : "";
+    if (!name) return null;
+    const kind = allowWounds && "kind" in entry && entry.kind === "wound" ? "wound" : "item";
+    return { name, kind };
+  });
+}
+
+export function normalizeInventory(value: unknown): CharacterInventory {
+  const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  return {
+    hands: normalizedSlots(source.hands, inventorySlotCounts.hands, false),
+    belt: normalizedSlots(source.belt, inventorySlotCounts.belt, false),
+    backpack: normalizedSlots(source.backpack, inventorySlotCounts.backpack, true),
+  };
+}
 
 export type CharacterRecord = {
   id: string;
@@ -49,6 +87,7 @@ export type CharacterRecord = {
   connectionBenefit: string | null;
   expertises: ExpertiseEntry[];
   traits: TraitEntry[];
+  inventory: CharacterInventory;
 };
 
 export function parseNamedLines(value: string): string[] {

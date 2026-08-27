@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { getCharacterRegistry } from "@/data/campaigns";
 import { CharacterForm } from "./character-form";
+import { PlaySheet } from "./play-sheet";
 
 export const dynamic = "force-dynamic";
 
-export default async function CharactersPage({ searchParams }: { searchParams: Promise<{ notice?: string; error?: string }> }) {
+export default async function CharactersPage({ searchParams }: { searchParams: Promise<{ notice?: string; error?: string; character?: string }> }) {
   const [characters, params] = await Promise.all([getCharacterRegistry(), searchParams]);
   const activeCount = characters.filter((character) => character.status === "active").length;
 
@@ -30,7 +31,7 @@ export default async function CharactersPage({ searchParams }: { searchParams: P
 
       <section className="registry-list" aria-label="Character registry">
         {characters.map((character) => (
-          <details className="character-editor" key={character.id}>
+          <details className="character-editor" id={`character-${character.id}`} open={params.character === character.id} key={character.id}>
             <summary>
               <span className={`status-dot ${character.status}`} aria-hidden="true" />
               <div><strong>{character.name}</strong><span>{character.background ?? "Background not recorded"}</span></div>
@@ -40,9 +41,13 @@ export default async function CharactersPage({ searchParams }: { searchParams: P
                 <div><dt>TXP</dt><dd>{character.txp.toLocaleString()}</dd></div>
                 <div><dt>Gold</dt><dd>{character.goldGc.toLocaleString()} gc</dd></div>
               </dl>
-              <span className="edit-label">Edit</span>
+              <span className="edit-label">Open sheet</span>
             </summary>
-            <CharacterForm character={character} />
+            <PlaySheet character={character} />
+            <details className="full-record-editor">
+              <summary>Edit full character record</summary>
+              <CharacterForm character={character} />
+            </details>
           </details>
         ))}
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { integerFromForm, isBackground, optionalText, parseExpertises, parseNamedLines, parseTraits } from "./character";
+import { integerFromForm, isBackground, normalizeInventory, optionalText, parseExpertises, parseNamedLines, parseTraits } from "./character";
 
 describe("character form parsing", () => {
   it("normalizes and deduplicates flexible lists", () => {
@@ -33,5 +33,18 @@ describe("character form parsing", () => {
   it("recognizes only playtest backgrounds", () => {
     expect(isBackground("Cartographer")).toBe(true);
     expect(isBackground("Cartographer!!!")).toBe(false);
+  });
+
+  it("normalizes inventory to the fixed playtest slots", () => {
+    const inventory = normalizeInventory({
+      hands: [{ name: " Sword ", kind: "wound" }],
+      backpack: [null, { name: "Broken ribs", kind: "wound" }],
+    });
+
+    expect(inventory.hands).toHaveLength(2);
+    expect(inventory.belt).toHaveLength(4);
+    expect(inventory.backpack).toHaveLength(10);
+    expect(inventory.hands[0]).toEqual({ name: "Sword", kind: "item" });
+    expect(inventory.backpack[1]).toEqual({ name: "Broken ribs", kind: "wound" });
   });
 });
