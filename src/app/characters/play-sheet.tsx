@@ -1,4 +1,4 @@
-import { inventorySlotCounts, type CharacterRecord, type InventorySlot } from "@/domain/character";
+import { inventorySlotCounts, inventorySpeedPenalty, type CharacterRecord, type InventorySlot } from "@/domain/character";
 import { updatePlaySheet } from "./actions";
 
 function Slot({ group, index, slot, wounds = false }: {
@@ -8,14 +8,11 @@ function Slot({ group, index, slot, wounds = false }: {
   wounds?: boolean;
 }) {
   return (
-    <div className={`inventory-slot ${slot?.kind === "wound" ? "wound-slot" : ""}`}>
+    <div className={`inventory-slot ${slot.wound ? "wound-slot" : ""} ${slot.item && slot.wound ? "overlap-slot" : ""}`}>
       <span className="slot-number">{index + 1}</span>
-      <input aria-label={`${group} slot ${index + 1}`} name={`inventory_${group}_${index}`} defaultValue={slot?.name ?? ""} placeholder="Empty" />
+      <input aria-label={`${group} slot ${index + 1} item`} name={`inventory_${group}_${index}`} defaultValue={slot.item ?? ""} placeholder="Empty item slot" />
       {wounds && (
-        <select aria-label={`${group} slot ${index + 1} type`} name={`inventory_${group}_${index}_kind`} defaultValue={slot?.kind ?? "item"}>
-          <option value="item">Item</option>
-          <option value="wound">Wound</option>
-        </select>
+        <input className="wound-input" aria-label={`${group} slot ${index + 1} wound`} name={`inventory_${group}_${index}_wound`} defaultValue={slot.wound ?? ""} placeholder="No Wound" />
       )}
     </div>
   );
@@ -39,7 +36,9 @@ function SlotGroup({ title, group, slots, wounds = false }: {
 
 export function PlaySheet({ character }: { character: CharacterRecord }) {
   const action = updatePlaySheet.bind(null, character.id, character.staminaMax);
-  const wounds = character.inventory.backpack.filter((slot) => slot?.kind === "wound").length;
+  const wounds = character.inventory.backpack.filter((slot) => slot.wound).length;
+  const speedPenalty = inventorySpeedPenalty(character.inventory);
+  const effectiveSpeed = Math.max(0, character.baseSpeed - speedPenalty);
 
   return (
     <div className="play-sheet">
@@ -47,7 +46,7 @@ export function PlaySheet({ character }: { character: CharacterRecord }) {
         <div className="attribute-block"><span>Agility</span><strong>{character.agility}</strong></div>
         <div className="attribute-block"><span>Mind</span><strong>{character.mind}</strong></div>
         <div className="attribute-block"><span>Strength</span><strong>{character.strength}</strong></div>
-        <div className="attribute-block"><span>Speed</span><strong>{character.baseSpeed}</strong><small>base</small></div>
+        <div className={`attribute-block ${speedPenalty ? "penalized" : ""}`}><span>Speed</span><strong>{effectiveSpeed}</strong><small>{speedPenalty ? `${character.baseSpeed} base − ${speedPenalty}` : "base"}</small></div>
         <div className="attribute-block"><span>Wounds</span><strong>{wounds}</strong><small>in pack</small></div>
       </section>
 
@@ -68,7 +67,7 @@ export function PlaySheet({ character }: { character: CharacterRecord }) {
           </div>
           <SlotGroup title="Backpack" group="backpack" slots={character.inventory.backpack} wounds />
         </div>
-        <div className="field-kit-actions"><p>Wounds occupy backpack slots. Speed penalties from overlapping items are still tracked manually.</p><button type="submit">Save field kit</button></div>
+        <div className="field-kit-actions"><p>A Wound can share any backpack slot with an item. Each overlap reduces Speed by 1.</p><button type="submit">Save field kit</button></div>
       </form>
     </div>
   );

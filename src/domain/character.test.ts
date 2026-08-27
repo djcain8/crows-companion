@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { integerFromForm, isBackground, normalizeInventory, optionalText, parseExpertises, parseNamedLines, parseTraits } from "./character";
+import { integerFromForm, inventorySpeedPenalty, isBackground, normalizeInventory, optionalText, parseExpertises, parseNamedLines, parseTraits } from "./character";
 
 describe("character form parsing", () => {
   it("normalizes and deduplicates flexible lists", () => {
@@ -44,7 +44,18 @@ describe("character form parsing", () => {
     expect(inventory.hands).toHaveLength(2);
     expect(inventory.belt).toHaveLength(4);
     expect(inventory.backpack).toHaveLength(10);
-    expect(inventory.hands[0]).toEqual({ name: "Sword", kind: "item" });
-    expect(inventory.backpack[1]).toEqual({ name: "Broken ribs", kind: "wound" });
+    expect(inventory.hands[0]).toEqual({ item: "Sword", wound: null });
+    expect(inventory.backpack[1]).toEqual({ item: null, wound: "Broken ribs" });
+  });
+
+  it("penalizes Speed once for each backpack slot containing loot and a Wound", () => {
+    const inventory = normalizeInventory({ backpack: [
+      { item: "Rope", wound: "Burned hand" },
+      { item: null, wound: "Broken ribs" },
+      { item: "Torch", wound: null },
+      { item: "Gem", wound: "Twisted ankle" },
+    ] });
+
+    expect(inventorySpeedPenalty(inventory)).toBe(2);
   });
 });

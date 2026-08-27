@@ -25,8 +25,7 @@ export function isBackground(value: string): value is (typeof backgrounds)[numbe
 
 export type ExpertiseEntry = { name: string; uses: number };
 export type TraitEntry = { name: string; tree: string | null };
-export type InventoryEntry = { name: string; kind: "item" | "wound" };
-export type InventorySlot = InventoryEntry | null;
+export type InventorySlot = { item: string | null; wound: string | null };
 export type CharacterInventory = {
   hands: InventorySlot[];
   belt: InventorySlot[];
@@ -37,9 +36,9 @@ export const inventorySlotCounts = { hands: 2, belt: 4, backpack: 10 } as const;
 
 export function emptyInventory(): CharacterInventory {
   return {
-    hands: Array(inventorySlotCounts.hands).fill(null),
-    belt: Array(inventorySlotCounts.belt).fill(null),
-    backpack: Array(inventorySlotCounts.backpack).fill(null),
+    hands: Array.from({ length: inventorySlotCounts.hands }, () => ({ item: null, wound: null })),
+    belt: Array.from({ length: inventorySlotCounts.belt }, () => ({ item: null, wound: null })),
+    backpack: Array.from({ length: inventorySlotCounts.backpack }, () => ({ item: null, wound: null })),
   };
 }
 
@@ -47,12 +46,25 @@ function normalizedSlots(value: unknown, count: number, allowWounds: boolean): I
   const source = Array.isArray(value) ? value : [];
   return Array.from({ length: count }, (_, index) => {
     const entry = source[index];
-    if (!entry || typeof entry !== "object") return null;
-    const name = "name" in entry && typeof entry.name === "string" ? entry.name.trim() : "";
-    if (!name) return null;
-    const kind = allowWounds && "kind" in entry && entry.kind === "wound" ? "wound" : "item";
-    return { name, kind };
+    if (!entry || typeof entry !== "object") return { item: null, wound: null };
+    const clean = (candidate: unknown) => typeof candidate === "string" && candidate.trim() ? candidate.trim() : null;
+
+    // Read the first inventory format as well as the current dual-occupancy format.
+    if ("name" in entry) {
+      const name = clean(entry.name);
+      const isWound = allowWounds && "kind" in entry && entry.kind === "wound";
+      return { item: isWound ? null : name, wound: isWound ? name : null };
+    }
+
+    return {
+      item: "item" in entry ? clean(entry.item) : null,
+      wound: allowWounds && "wound" in entry ? clean(entry.wound) : null,
+    };
   });
+}
+
+export function inventorySpeedPenalty(inventory: CharacterInventory): number {
+  return inventory.backpack.filter((slot) => slot.item && slot.wound).length;
 }
 
 export function normalizeInventory(value: unknown): CharacterInventory {

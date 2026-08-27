@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { clampCoordinate, type ExpeditionCharacter, type ExpeditionMap, type MapToken } from "@/domain/expedition";
 import { createClient } from "@/lib/supabase/client";
 
@@ -34,6 +34,16 @@ export function ExpeditionBoard({ maps, initialTokens, characters }: {
   const dragRef = useRef<{ id: string; pointerId: number } | null>(null);
   const activeMap = maps.find((map) => map.id === activeMapId) ?? maps[0];
   const activeTokens = tokens.filter((token) => token.mapId === activeMapId);
+  const activeEnemies = activeTokens.filter((token) => token.kind === "enemy");
+
+  function enemyNumber(token: MapToken): number {
+    const recordedNumber = token.label.match(/^Enemy (\d+)$/)?.[1];
+    return recordedNumber ? Number(recordedNumber) : activeEnemies.findIndex((enemy) => enemy.id === token.id) + 1;
+  }
+
+  function displayLabel(token: MapToken): string {
+    return token.kind === "enemy" ? `Enemy ${enemyNumber(token)}` : token.label;
+  }
 
   const refreshTokens = useCallback(async () => {
     const { data, error: refreshError } = await supabase
@@ -101,11 +111,13 @@ export function ExpeditionBoard({ maps, initialTokens, characters }: {
 
   async function addEnemy() {
     setError(null);
+    const usedNumbers = activeEnemies.map((token) => enemyNumber(token));
+    const nextEnemyNumber = Math.max(0, ...usedNumbers) + 1;
     const { error: addError } = await supabase.from("map_tokens").insert({
       expedition_id: EXPEDITION_ID,
       map_id: activeMapId,
       kind: "enemy",
-      label: "Enemy",
+      label: `Enemy ${nextEnemyNumber}`,
       color: "#d85050",
       x: 0.5,
       y: 0.5,
@@ -139,8 +151,8 @@ export function ExpeditionBoard({ maps, initialTokens, characters }: {
       </div>
 
       <div className="map-toolbar">
-        <div className="crow-spawners"><span>Place a Crow</span>{characters.map((character) => <button style={{ "--token-color": character.color } as React.CSSProperties} onClick={() => addCharacter(character)} key={character.id}>{character.name}</button>)}</div>
-        <button className="enemy-spawner" onClick={addEnemy}><b>×</b> Add enemy</button>
+        <div className="crow-spawners"><span>Place a Crow</span>{characters.map((character) => <button style={{ "--token-color": character.color } as CSSProperties} onClick={() => addCharacter(character)} key={character.id}>{character.name}</button>)}</div>
+        <button className="enemy-spawner" onClick={addEnemy}><b>+</b> Add numbered enemy</button>
       </div>
 
       {error && <p className="map-error" role="alert">Map update failed: {error}</p>}
@@ -153,23 +165,23 @@ export function ExpeditionBoard({ maps, initialTokens, characters }: {
           {activeTokens.map((token) => (
             <button
               className={`map-token ${token.kind} ${selectedTokenId === token.id ? "selected" : ""}`}
-              style={{ left: `${token.x * 100}%`, top: `${token.y * 100}%`, "--token-color": token.color } as React.CSSProperties}
-              aria-label={`${token.label}. Drag to move.`}
-              title={token.label}
+              style={{ left: `${token.x * 100}%`, top: `${token.y * 100}%`, "--token-color": token.color } as CSSProperties}
+              aria-label={`${displayLabel(token)}. Drag to move.`}
+              title={displayLabel(token)}
               onPointerDown={(event) => startDrag(event, token.id)}
               onPointerMove={(event) => moveLocally(event, token.id)}
               onPointerUp={(event) => void finishDrag(event, token.id)}
               onPointerCancel={() => { dragRef.current = null; }}
               key={token.id}
             >
-              {token.kind === "enemy" ? "×" : token.label.slice(0, 2).toUpperCase()}
+              {token.kind === "enemy" ? enemyNumber(token) : token.label.slice(0, 2).toUpperCase()}
             </button>
           ))}
         </div>
       </div>
 
       <div className="selection-bar" aria-live="polite">
-        {selectedToken ? <><span>Selected: <strong>{selectedToken.label}</strong></span><button onClick={removeSelected}>Remove marker</button></> : <span>Select or drag a marker on the map.</span>}
+        {selectedToken ? <><span>Selected: <strong>{displayLabel(selectedToken)}</strong></span><button onClick={removeSelected}>Remove marker</button></> : <span>Select or drag a marker on the map.</span>}
       </div>
     </div>
   );
