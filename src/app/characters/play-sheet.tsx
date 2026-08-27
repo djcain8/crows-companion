@@ -12,7 +12,10 @@ function Slot({ group, index, slot, wounds = false }: {
       <span className="slot-number">{index + 1}</span>
       <input aria-label={`${group} slot ${index + 1} item`} name={`inventory_${group}_${index}`} defaultValue={slot.item ?? ""} placeholder="Empty item slot" />
       {wounds && (
-        <input className="wound-input" aria-label={`${group} slot ${index + 1} wound`} name={`inventory_${group}_${index}_wound`} defaultValue={slot.wound ?? ""} placeholder="No Wound" />
+        <label className="wound-toggle">
+          <input type="checkbox" aria-label={`${group} slot ${index + 1} has a Wound`} name={`inventory_${group}_${index}_wound`} defaultChecked={slot.wound} />
+          <span>Wound</span>
+        </label>
       )}
     </div>
   );

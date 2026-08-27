@@ -22,7 +22,7 @@ const GADWICK_CAMPAIGN_ID = "00000000-0000-4000-8000-000000000001";
 function inventorySlots(formData: FormData, group: keyof typeof inventorySlotCounts): InventorySlot[] {
   return Array.from({ length: inventorySlotCounts[group] }, (_, index) => {
     const item = optionalText(formData.get(`inventory_${group}_${index}`));
-    const wound = group === "backpack" ? optionalText(formData.get(`inventory_${group}_${index}_wound`)) : null;
+    const wound = group === "backpack" && formData.get(`inventory_${group}_${index}_wound`) === "on";
     return { item, wound };
   });
 }

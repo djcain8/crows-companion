@@ -44,16 +44,16 @@ describe("character form parsing", () => {
     expect(inventory.hands).toHaveLength(2);
     expect(inventory.belt).toHaveLength(4);
     expect(inventory.backpack).toHaveLength(10);
-    expect(inventory.hands[0]).toEqual({ item: "Sword", wound: null });
-    expect(inventory.backpack[1]).toEqual({ item: null, wound: "Broken ribs" });
+    expect(inventory.hands[0]).toEqual({ item: "Sword", wound: false });
+    expect(inventory.backpack[1]).toEqual({ item: null, wound: true });
   });
 
   it("penalizes Speed once for each backpack slot containing loot and a Wound", () => {
     const inventory = normalizeInventory({ backpack: [
-      { item: "Rope", wound: "Burned hand" },
-      { item: null, wound: "Broken ribs" },
-      { item: "Torch", wound: null },
-      { item: "Gem", wound: "Twisted ankle" },
+      { item: "Rope", wound: true },
+      { item: null, wound: true },
+      { item: "Torch", wound: false },
+      { item: "Gem", wound: true },
     ] });
 
     expect(inventorySpeedPenalty(inventory)).toBe(2);
