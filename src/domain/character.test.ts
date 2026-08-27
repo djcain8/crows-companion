@@ -37,8 +37,8 @@ describe("character form parsing", () => {
 
   it("normalizes inventory to the fixed playtest slots", () => {
     const inventory = normalizeInventory({
-      hands: [{ name: " Sword ", kind: "wound" }],
-      backpack: [null, { name: "Broken ribs", kind: "wound" }],
+      hands: [{ item: " Sword ", wound: true }],
+      backpack: [null, { item: null, wound: true }],
     });
 
     expect(inventory.hands).toHaveLength(2);

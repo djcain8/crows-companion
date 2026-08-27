@@ -49,16 +49,9 @@ function normalizedSlots(value: unknown, count: number, allowWounds: boolean): I
     if (!entry || typeof entry !== "object") return { item: null, wound: false };
     const clean = (candidate: unknown) => typeof candidate === "string" && candidate.trim() ? candidate.trim() : null;
 
-    // Read the first inventory format as well as the current dual-occupancy format.
-    if ("name" in entry) {
-      const name = clean(entry.name);
-      const isWound = allowWounds && "kind" in entry && entry.kind === "wound";
-      return { item: isWound ? null : name, wound: isWound };
-    }
-
     return {
       item: "item" in entry ? clean(entry.item) : null,
-      wound: Boolean(allowWounds && "wound" in entry && entry.wound),
+      wound: Boolean(allowWounds && "wound" in entry && entry.wound === true),
     };
   });
 }
