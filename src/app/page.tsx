@@ -63,7 +63,7 @@ function Town({ campaign }: { campaign: CampaignOverview }) {
           <a className="active" href="#town">Town</a>
           <a href="/characters">Crows</a>
           <a href="#inventory" aria-disabled="true">Inventory <small>soon</small></a>
-          <a href="#expedition" aria-disabled="true">Expedition <small>later</small></a>
+          <a href="/expedition">Expedition</a>
         </nav>
       </header>
 
