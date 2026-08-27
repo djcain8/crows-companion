@@ -10,12 +10,12 @@ export default function CompendiumPage() {
         <nav><Link href="/">Town</Link><Link href="/characters">Crows</Link><Link href="/expedition">Expedition</Link></nav>
       </header>
 
-      <div className="compendium-tabs" role="tablist" aria-label="Compendium categories">
-        <button className="active" role="tab" aria-selected="true">Backgrounds <small>36</small></button>
-        <button disabled role="tab" aria-selected="false">Traits <small>later</small></button>
-        <button disabled role="tab" aria-selected="false">Expertises <small>later</small></button>
-        <button disabled role="tab" aria-selected="false">Equipment <small>later</small></button>
-      </div>
+      <nav className="compendium-tabs" aria-label="Compendium categories">
+        <Link className="active" href="/compendium" aria-current="page">Backgrounds <small>36</small></Link>
+        <Link href="/compendium/traits">Starting Traits <small>36</small></Link>
+        <span>Expertises <small>later</small></span>
+        <span>Equipment <small>later</small></span>
+      </nav>
 
       <aside className="universal-kit">
         <div><span>Every Crow begins with</span><strong>Coin purse · Knife · Rope · 6 rations · 3d6 gc</strong></div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { BackgroundEntry } from "@/domain/compendium";
+import { traitId, type BackgroundEntry } from "@/domain/compendium";
 
 function BackgroundCard({ background }: { background: BackgroundEntry }) {
   return (
@@ -15,7 +15,7 @@ function BackgroundCard({ background }: { background: BackgroundEntry }) {
         <dl>
           <div><dt>Characteristic at 2</dt><dd>{background.characteristic}</dd></div>
           <div><dt>Stamina</dt><dd>{background.stamina}</dd></div>
-          <div><dt>Starting Trait</dt><dd>{background.trait}</dd></div>
+          <div><dt>Starting Trait</dt><dd><a className="trait-link" href={`/compendium/traits#${traitId(background.trait.split(": ")[1])}`}>{background.trait}<span aria-hidden="true"> →</span></a></dd></div>
           <div><dt>Expertises</dt><dd>{background.expertises}</dd></div>
           <div><dt>Equipment</dt><dd>{background.equipment}</dd></div>
         </dl>
