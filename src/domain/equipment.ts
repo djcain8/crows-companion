@@ -11,6 +11,16 @@ export type EquipmentEntry = {
   summary: string;
   rules?: string;
   tags?: string[];
+  attack?: WeaponAttack;
+  crafting?: string;
+};
+
+export type WeaponAttack = {
+  roll: string;
+  range: string;
+  tier2: string;
+  tier3: string;
+  qualities: string[];
 };
 
 function idFor(name: string) {
@@ -23,10 +33,19 @@ function item(
   priceGc: number | null,
   stack: number,
   summary: string,
-  options: Partial<Pick<EquipmentEntry, "slots" | "rules" | "tags">> = {},
+  options: Partial<Pick<EquipmentEntry, "slots" | "rules" | "tags" | "attack" | "crafting">> = {},
 ): EquipmentEntry {
-  return { id: idFor(name), name, category, slots: options.slots ?? 1, stack, priceGc, summary, rules: options.rules, tags: options.tags };
+  return { id: idFor(name), name, category, slots: options.slots ?? 1, stack, priceGc, summary, rules: options.rules, tags: options.tags, attack: options.attack, crafting: options.crafting };
 }
+
+const weapon = (
+  name: string,
+  priceGc: number,
+  stack: number,
+  summary: string,
+  attack: WeaponAttack,
+  options: Partial<Pick<EquipmentEntry, "slots" | "crafting">> = {},
+) => item(name, "weapon", priceGc, stack, summary, { ...options, attack });
 
 export const equipmentEntries: EquipmentEntry[] = [
   item("11-Foot Pole", "gear", 5, 1, "An 11-foot-long wooden pole. Useful for poking, prodding, and improvising.", { slots: 2 }),
@@ -79,20 +98,28 @@ export const equipmentEntries: EquipmentEntry[] = [
   item("Rage Potion", "alchemy", 250, 5, "Gain 5 AD and +2 melee damage while you keep attacking each round.", { tags: ["maneuver", "consumable"] }),
   item("Smoke Bomb", "alchemy", 50, 2, "Create a 3-cube area of heavy concealment that gradually dissipates.", { tags: ["maneuver", "ranged 10"] }),
 
-  item("Knife", "weapon", 10, 2, "A light slashing weapon that can be thrown.", { tags: ["melee 1", "ranged 5", "Light", "Disengage", "Parry 2"] }),
-  item("Sword", "weapon", 12, 1, "A slashing weapon suited to disengaging and parrying.", { tags: ["melee 1", "Disengage", "Parry 4"] }),
-  item("Handaxe", "weapon", 10, 2, "A light chopping weapon that can be thrown and dismember foes.", { tags: ["melee 1", "ranged 5", "Light", "Dismember"] }),
-  item("Axe", "weapon", 12, 1, "A chopping weapon built to dismember foes.", { tags: ["melee 1", "Dismember"] }),
-  item("Mace", "weapon", 12, 1, "A bashing weapon that can pummel foes.", { tags: ["melee 1", "Pummeling"] }),
-  item("Spear", "weapon", 12, 1, "A brutal stabbing weapon.", { tags: ["melee 1", "Brutal"] }),
-  item("Maul", "weapon", 15, 1, "A two-slot bashing weapon that pummels foes.", { slots: 2, tags: ["melee 1", "Pummeling"] }),
-  item("Greataxe", "weapon", 15, 1, "A two-slot chopping weapon with exceptional damage.", { slots: 2, tags: ["melee 1", "Dismember"] }),
-  item("Greatsword", "weapon", 15, 1, "A two-slot slashing weapon with strong defensive reach.", { slots: 2, tags: ["melee 1", "Disengage", "Parry 6"] }),
-  item("Pike", "weapon", 15, 1, "A two-slot brutal stabbing weapon with reach.", { slots: 2, tags: ["melee 2", "Brutal"] }),
-  item("Shortbow", "weapon", 10, 1, "A ranged bow that is cumbersome at close quarters.", { tags: ["ranged 10", "Cumbersome"] }),
+  weapon("Hammer", 10, 2, "A light bashing weapon that can be thrown.", { roll:"2d10 + Agility or Strength", range:"Melee 1 / Ranged 5", tier2:"2 + Agility or Strength", tier3:"4 + Agility or Strength", qualities:["Bashing", "Light", "Pummeling"] }),
+  weapon("Mace", 12, 1, "A bashing weapon that can pummel foes.", { roll:"2d10 + Strength", range:"Melee 1", tier2:"3 + Strength", tier3:"6 + Strength", qualities:["Bashing", "Pummeling"] }),
+  weapon("Knife", 10, 2, "A light slashing weapon that can be thrown.", { roll:"2d10 + Agility or Strength", range:"Melee 1 / Ranged 5", tier2:"2 + Agility or Strength", tier3:"4 + Agility or Strength", qualities:["Slashing", "Light", "Disengage", "Parry 2"] }),
+  weapon("Sword", 12, 1, "A slashing weapon suited to disengaging and parrying.", { roll:"2d10 + Strength", range:"Melee 1", tier2:"3 + Strength", tier3:"6 + Strength", qualities:["Slashing", "Disengage", "Parry 4"] }),
+  weapon("Handaxe", 10, 2, "A light chopping weapon that can be thrown and dismember foes.", { roll:"2d10 + Agility or Strength", range:"Melee 1 / Ranged 5", tier2:"2 + Agility or Strength", tier3:"5 + Agility or Strength", qualities:["Chopping", "Light", "Dismember"] }),
+  weapon("Axe", 12, 1, "A chopping weapon built to dismember foes.", { roll:"2d10 + Strength", range:"Melee 1", tier2:"3 + Strength", tier3:"7 + Strength", qualities:["Chopping", "Dismember"] }),
+  weapon("Stiletto", 10, 2, "A light, brutal stabbing weapon that can be thrown.", { roll:"2d10 + Agility or Strength", range:"Melee 1 / Ranged 5", tier2:"2 + Agility or Strength", tier3:"5 + Agility or Strength", qualities:["Stabbing", "Light", "Brutal"] }),
+  weapon("Spear", 12, 1, "A brutal stabbing weapon.", { roll:"2d10 + Strength", range:"Melee 1", tier2:"3 + Strength", tier3:"7 + Strength", qualities:["Stabbing", "Brutal"] }),
+  weapon("Flail", 15, 1, "A two-slot bashing weapon with reach.", { roll:"2d10 + Strength", range:"Melee 2", tier2:"3 + Strength", tier3:"6 + Strength", qualities:["Bashing", "Pummeling"] }, { slots:2 }),
+  weapon("Maul", 15, 1, "A two-slot bashing weapon with exceptional damage.", { roll:"2d10 + Strength", range:"Melee 1", tier2:"4 + Strength", tier3:"8 + Strength", qualities:["Bashing", "Pummeling"] }, { slots:2 }),
+  weapon("Glaive", 15, 1, "A two-slot slashing weapon with reach and defensive control.", { roll:"2d10 + Strength", range:"Melee 2", tier2:"3 + Strength", tier3:"6 + Strength", qualities:["Slashing", "Disengage", "Parry 6"] }, { slots:2 }),
+  weapon("Greatsword", 15, 1, "A two-slot slashing weapon with strong defensive reach.", { roll:"2d10 + Strength", range:"Melee 1", tier2:"4 + Strength", tier3:"8 + Strength", qualities:["Slashing", "Disengage", "Parry 6"] }, { slots:2 }),
+  weapon("Halberd", 15, 1, "A two-slot chopping weapon with reach.", { roll:"2d10 + Strength", range:"Melee 2", tier2:"3 + Strength", tier3:"7 + Strength", qualities:["Chopping", "Dismember"] }, { slots:2 }),
+  weapon("Greataxe", 15, 1, "A two-slot chopping weapon with exceptional damage.", { roll:"2d10 + Strength", range:"Melee 1", tier2:"4 + Strength", tier3:"9 + Strength", qualities:["Chopping", "Dismember"] }, { slots:2 }),
+  weapon("Pike", 15, 1, "A two-slot brutal stabbing weapon with reach.", { roll:"2d10 + Strength", range:"Melee 2", tier2:"3 + Strength", tier3:"7 + Strength", qualities:["Stabbing", "Brutal"] }, { slots:2 }),
+  weapon("Warpick", 15, 1, "A two-slot brutal stabbing weapon with exceptional damage.", { roll:"2d10 + Strength", range:"Melee 1", tier2:"4 + Strength", tier3:"9 + Strength", qualities:["Stabbing", "Brutal"] }, { slots:2 }),
+  weapon("Shortbow", 10, 1, "A ranged bow that is cumbersome at close quarters.", { roll:"2d10 + Agility", range:"Ranged 10", tier2:"2 + Agility", tier3:"4 + Agility", qualities:["Bow", "Cumbersome"] }),
+  weapon("Longbow", 12, 1, "A two-slot bow with extended range.", { roll:"2d10 + Agility", range:"Ranged 20", tier2:"3 + Agility", tier3:"6 + Agility", qualities:["Bow"] }, { slots:2 }),
+  weapon("Crossbow", 15, 1, "A two-slot bow that must be reloaded between attacks.", { roll:"2d10 + Agility", range:"Ranged 15", tier2:"4 + Agility", tier3:"8 + Agility", qualities:["Bow", "Reload"] }, { slots:2 }),
   item("Quiver of Arrows", "weapon", 5, 1, "Ammunition for shortbows and longbows.", { tags: ["UD 2", "ammunition"] }),
-  item("Miner’s Pick", "weapon", 10, 1, "Useful for breaking stone and the occasional skull.", { tags: ["improvised weapon"] }),
-  item("Warpick", "weapon", 10, 1, "A miner’s pick used as a stabbing weapon.", { tags: ["melee 1", "Stabbing"] }),
+  item("Case of Crossbow Bolts", "weapon", 5, 1, "Ammunition for crossbows.", { tags: ["UD 2", "ammunition"] }),
+  item("Miner’s Pick", "gear", 10, 1, "Useful for breaking stone and the occasional skull.", { tags: ["improvised weapon"] }),
 
   item("Shield", "armor", 15, 1, "A wielded shield with 5 Armor Defense.", { tags: ["AD 5"] }),
   item("Light Armor", "armor", 50, 1, "A suit of cloth, hide, or leather armor with 5 Armor Defense.", { slots: 2, tags: ["AD 5"] }),

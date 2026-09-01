@@ -22,6 +22,17 @@ function EquipmentCard({ item }: { item: EquipmentEntry }) {
         <span><small>Slots</small><b>{item.slots}</b></span>
         <span><small>Stack</small><b>{item.stack}</b></span>
       </div>
+      {item.attack ? (
+        <section className="weapon-attack" aria-label={`${item.name} attack`}>
+          <div className="weapon-attack-heading"><i>{item.attack.range}</i><strong>Attack {item.attack.roll}</strong></div>
+          <div className="weapon-tier-grid">
+            <span><small>≤11</small><b>Miss</b></span>
+            <span><small>12–16</small><b>{item.attack.tier2}</b></span>
+            <span><small>17+</small><b>{item.attack.tier3}</b></span>
+          </div>
+          <p>{item.attack.qualities.join(", ")}</p>
+        </section>
+      ) : null}
       {item.tags?.length ? <div className="equipment-tags">{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
       <p>{item.summary}</p>
       {item.rules ? <small className="equipment-rules">{item.rules}</small> : null}
@@ -37,7 +48,7 @@ export function EquipmentBrowser({ equipment }: { equipment: EquipmentEntry[] })
     return equipment.filter((item) => {
       if (category !== "all" && item.category !== category) return false;
       if (!needle) return true;
-      return [item.name, item.category, item.summary, item.rules, ...(item.tags ?? [])]
+      return [item.name, item.category, item.summary, item.rules, item.attack?.roll, item.attack?.range, item.attack?.tier2, item.attack?.tier3, ...(item.attack?.qualities ?? []), ...(item.tags ?? [])]
         .some((value) => value?.toLocaleLowerCase().includes(needle));
     });
   }, [category, equipment, query]);

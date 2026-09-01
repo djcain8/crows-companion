@@ -25,4 +25,15 @@ describe("equipment catalog", () => {
     expect(equipmentById.get("greataxe")?.slots).toBe(2);
     expect(equipmentById.get("tent")?.slots).toBe(2);
   });
+
+  it("records the complete attack block for every weapon card", () => {
+    const attackCards = equipmentEntries.filter((entry) => entry.attack);
+    expect(attackCards).toHaveLength(19);
+    for (const entry of attackCards) {
+      expect(entry.category).toBe("weapon");
+      expect(entry.attack).toMatchObject({ roll: expect.any(String), range: expect.any(String), tier2: expect.any(String), tier3: expect.any(String) });
+      expect(entry.attack?.qualities.length).toBeGreaterThan(0);
+    }
+    expect(equipmentById.get("warpick")).toMatchObject({ slots: 2, stack: 1, priceGc: 15, attack: { roll: "2d10 + Strength", range: "Melee 1", tier2: "4 + Strength", tier3: "9 + Strength", qualities: ["Stabbing", "Brutal"] } });
+  });
 });
