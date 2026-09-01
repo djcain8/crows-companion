@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCharacterRegistry } from "@/data/campaigns";
 import { CharacterForm } from "./character-form";
 import { PlaySheet } from "./play-sheet";
+import { DeleteCharacterButton } from "./delete-character-button";
 
 export const dynamic = "force-dynamic";
 
@@ -41,12 +42,13 @@ export default async function CharactersPage({ searchParams }: { searchParams: P
                 <div><dt>TXP</dt><dd>{character.txp.toLocaleString()}</dd></div>
                 <div><dt>Gold</dt><dd>{character.goldGc.toLocaleString()} gc</dd></div>
               </dl>
-              <span className="edit-label">Open sheet</span>
+              <span className="edit-label" aria-hidden="true"><span className="open-label">Open sheet</span><span className="close-label">Close sheet</span><i>⌄</i></span>
             </summary>
             <PlaySheet character={character} />
             <details className="full-record-editor">
               <summary>Edit full character record</summary>
               <CharacterForm character={character} />
+              <DeleteCharacterButton characterId={character.id} characterName={character.name} />
             </details>
           </details>
         ))}

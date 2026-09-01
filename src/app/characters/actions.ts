@@ -123,6 +123,21 @@ export async function updateCharacter(characterId: string, formData: FormData) {
   finishMutation("Character saved.", characterId);
 }
 
+export async function deleteCharacter(characterId: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("characters")
+      .delete()
+      .eq("id", characterId)
+      .eq("campaign_id", GADWICK_CAMPAIGN_ID);
+    if (error) throw new Error(`Unable to delete character: ${error.message}`);
+  } catch (error) {
+    redirectFailure(error);
+  }
+  finishMutation("Character deleted.");
+}
+
 export async function updatePlaySheet(characterId: string, staminaMax: number, formData: FormData) {
   try {
     const values = {
