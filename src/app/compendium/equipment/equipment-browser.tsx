@@ -1,0 +1,58 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { equipmentCategories, type EquipmentCategory, type EquipmentEntry } from "@/domain/equipment";
+
+const categoryLabels: Record<EquipmentCategory, string> = {
+  gear: "Gear",
+  alchemy: "Alchemy",
+  weapon: "Weapons",
+  armor: "Armor",
+  spellbook: "Spellbooks",
+};
+
+function EquipmentCard({ item }: { item: EquipmentEntry }) {
+  return (
+    <article className={`equipment-card category-${item.category}`}>
+      <header>
+        <div><span>{categoryLabels[item.category]}</span><h2>{item.name}</h2></div>
+        <strong>{item.priceGc === null ? "Currency" : `${item.priceGc.toLocaleString()} gc`}</strong>
+      </header>
+      <div className="equipment-card-stats">
+        <span><small>Slots</small><b>{item.slots}</b></span>
+        <span><small>Stack</small><b>{item.stack}</b></span>
+      </div>
+      {item.tags?.length ? <div className="equipment-tags">{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
+      <p>{item.summary}</p>
+      {item.rules ? <small className="equipment-rules">{item.rules}</small> : null}
+    </article>
+  );
+}
+
+export function EquipmentBrowser({ equipment }: { equipment: EquipmentEntry[] }) {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<EquipmentCategory | "all">("all");
+  const results = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase();
+    return equipment.filter((item) => {
+      if (category !== "all" && item.category !== category) return false;
+      if (!needle) return true;
+      return [item.name, item.category, item.summary, item.rules, ...(item.tags ?? [])]
+        .some((value) => value?.toLocaleLowerCase().includes(needle));
+    });
+  }, [category, equipment, query]);
+
+  return (
+    <>
+      <div className="compendium-tools equipment-tools">
+        <label><span>Search equipment</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Try ‘healing’, ‘Parry’, ‘light’, or ‘UD’…" autoComplete="off" /></label>
+        <label className="equipment-filter"><span>Category</span><select value={category} onChange={(event) => setCategory(event.target.value as EquipmentCategory | "all")}><option value="all">All equipment</option>{equipmentCategories.map((value) => <option value={value} key={value}>{categoryLabels[value]}</option>)}</select></label>
+        <p><strong>{results.length}</strong> of {equipment.length} cards</p>
+      </div>
+      <section className="equipment-results" aria-live="polite" aria-label="Equipment search results">
+        {results.map((item) => <EquipmentCard item={item} key={item.id} />)}
+        {results.length === 0 ? <div className="compendium-empty"><strong>No matching equipment.</strong><span>Try another name, category, property, or rule term.</span></div> : null}
+      </section>
+    </>
+  );
+}

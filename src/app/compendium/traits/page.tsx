@@ -13,7 +13,7 @@ export default function StartingTraitsPage() {
         <Link href="/compendium">Backgrounds <small>36</small></Link>
         <Link className="active" href="/compendium/traits" aria-current="page">Starting Traits <small>36</small></Link>
         <span>Expertises <small>later</small></span>
-        <span>Equipment <small>later</small></span>
+        <Link href="/compendium/equipment">Equipment</Link>
       </nav>
       <TraitBrowser traits={startingTraitEntries} />
     </main>

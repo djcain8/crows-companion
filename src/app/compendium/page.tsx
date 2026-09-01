@@ -14,7 +14,7 @@ export default function CompendiumPage() {
         <Link className="active" href="/compendium" aria-current="page">Backgrounds <small>36</small></Link>
         <Link href="/compendium/traits">Starting Traits <small>36</small></Link>
         <span>Expertises <small>later</small></span>
-        <span>Equipment <small>later</small></span>
+        <Link href="/compendium/equipment">Equipment</Link>
       </nav>
 
       <aside className="universal-kit">
