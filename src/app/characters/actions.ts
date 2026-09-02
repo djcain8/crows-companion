@@ -10,24 +10,24 @@ import {
   parseExpertises,
   parseTraits,
   isBackground,
-  inventorySlotCounts,
   emptyInventory,
-  type CharacterInventory,
+  normalizeInventory,
   type CharacterStatus,
 } from "@/domain/character";
-import { rebuildCarriedInventory, type InventoryDraft } from "@/domain/inventory";
+import { inventoryPlacementErrors } from "@/domain/inventory-placement";
 import { createClient } from "@/lib/supabase/server";
 
 const GADWICK_CAMPAIGN_ID = "00000000-0000-4000-8000-000000000001";
 
-function inventoryValues(formData: FormData, current: CharacterInventory): CharacterInventory {
-  const draft = Object.fromEntries((["hands", "belt", "backpack"] as const).map((group) => [group,
-    Array.from({ length:inventorySlotCounts[group] }, (_, index) => ({
-      name:optionalText(formData.get(`inventory_${group}_${index}`)),
-      wound:group === "backpack" && formData.get(`inventory_${group}_${index}_wound`) === "on",
-    })),
-  ])) as InventoryDraft;
-  return rebuildCarriedInventory(current, draft);
+function inventoryValues(formData: FormData) {
+  const value = formData.get("inventory_json");
+  if (typeof value !== "string") throw new Error("Inventory data is missing.");
+  let parsed: unknown;
+  try { parsed = JSON.parse(value); } catch { throw new Error("Inventory data is invalid."); }
+  const inventory = normalizeInventory(parsed);
+  const errors = inventoryPlacementErrors(inventory);
+  if (errors.length) throw new Error(errors[0]);
+  return inventory;
 }
 
 function boundedInteger(formData: FormData, name: string, fallback: number, min: number, max: number) {
@@ -133,12 +133,12 @@ export async function deleteCharacter(characterId: string) {
   finishMutation("Character deleted.");
 }
 
-export async function updatePlaySheet(characterId: string, staminaMax: number, currentInventory: CharacterInventory, formData: FormData) {
+export async function updatePlaySheet(characterId: string, staminaMax: number, formData: FormData) {
   try {
     const values = {
       stamina_current: boundedInteger(formData, "stamina_current", staminaMax, 0, staminaMax),
       gold_gc: boundedInteger(formData, "gold_gc", 0, 0, 999999999),
-      inventory: inventoryValues(formData, currentInventory),
+      inventory: inventoryValues(formData),
     };
     const supabase = await createClient();
     const { error } = await supabase

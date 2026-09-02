@@ -1,46 +1,9 @@
-import { inventoryItem, inventorySlotCounts, inventorySpeedPenalty, type CharacterInventory, type CharacterRecord, type InventorySlot } from "@/domain/character";
+import { inventorySpeedPenalty, type CharacterRecord } from "@/domain/character";
 import { updatePlaySheet } from "./actions";
-
-function Slot({ group, index, slot, inventory, wounds = false }: {
-  group: "hands" | "belt" | "backpack";
-  index: number;
-  slot: InventorySlot;
-  inventory: CharacterInventory;
-  wounds?: boolean;
-}) {
-  return (
-    <div className={`inventory-slot ${slot.wound ? "wound-slot" : ""} ${slot.itemId && slot.wound ? "overlap-slot" : ""}`}>
-      <span className="slot-number">{index + 1}</span>
-      <input aria-label={`${group} slot ${index + 1} item`} name={`inventory_${group}_${index}`} defaultValue={inventoryItem(inventory, slot.itemId)?.name ?? ""} placeholder="Empty item slot" />
-      {wounds && (
-        <label className="wound-toggle">
-          <input type="checkbox" aria-label={`${group} slot ${index + 1} has a Wound`} name={`inventory_${group}_${index}_wound`} defaultChecked={slot.wound} />
-          <span>Wound</span>
-        </label>
-      )}
-    </div>
-  );
-}
-
-function SlotGroup({ title, group, slots, inventory, wounds = false }: {
-  title: string;
-  group: "hands" | "belt" | "backpack";
-  slots: InventorySlot[];
-  inventory: CharacterInventory;
-  wounds?: boolean;
-}) {
-  return (
-    <section className={`inventory-group ${group}`}>
-      <div className="inventory-heading"><h3>{title}</h3><span>{inventorySlotCounts[group]} slots</span></div>
-      <div className="inventory-slots">
-        {slots.map((slot, index) => <Slot group={group} index={index} slot={slot} inventory={inventory} wounds={wounds} key={index} />)}
-      </div>
-    </section>
-  );
-}
+import { InventoryEditor } from "./inventory-editor";
 
 export function PlaySheet({ character }: { character: CharacterRecord }) {
-  const action = updatePlaySheet.bind(null, character.id, character.staminaMax, character.inventory);
+  const action = updatePlaySheet.bind(null, character.id, character.staminaMax);
   const wounds = character.inventory.backpack.filter((slot) => slot.wound).length;
   const speedPenalty = inventorySpeedPenalty(character.inventory);
   const effectiveSpeed = Math.max(0, character.baseSpeed - speedPenalty);
@@ -65,13 +28,7 @@ export function PlaySheet({ character }: { character: CharacterRecord }) {
           <label><span>Current Stamina</span><div><input name="stamina_current" type="number" min={0} max={character.staminaMax} defaultValue={character.staminaCurrent} /><b>/ {character.staminaMax}</b></div></label>
           <label><span>Gold</span><div><input name="gold_gc" type="number" min={0} defaultValue={character.goldGc} /><b>gc</b></div></label>
         </div>
-        <div className="inventory-grid">
-          <div className="carried-slots">
-            <SlotGroup title="Hands" group="hands" slots={character.inventory.hands} inventory={character.inventory} />
-            <SlotGroup title="Belt" group="belt" slots={character.inventory.belt} inventory={character.inventory} />
-          </div>
-          <SlotGroup title="Backpack" group="backpack" slots={character.inventory.backpack} inventory={character.inventory} wounds />
-        </div>
+        <InventoryEditor initialInventory={character.inventory} baseSpeed={character.baseSpeed} />
         <div className="field-kit-actions"><p>A Wound can share any backpack slot with an item. Each overlap reduces Speed by 1.</p><button type="submit">Save field kit</button></div>
       </form>
     </div>
