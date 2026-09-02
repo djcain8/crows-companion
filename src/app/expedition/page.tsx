@@ -10,7 +10,7 @@ export default async function ExpeditionPage() {
   return (
     <main className="expedition-shell">
       <header className="expedition-header">
-        <div><p className="eyebrow">First expedition</p><h1>The Dungeon</h1><p>Shared battle maps for the Crows. Anyone at the table can place, move, or remove a marker.</p></div>
+        <div><p className="eyebrow">Expedition</p><h1>Blood Library</h1><p>Seven chambers, shifting floors, and a dangerous road home. Anyone at the table can place, move, or remove a marker.</p></div>
         <nav><Link href="/">Town</Link><Link href="/characters">Crows</Link><Link href="/compendium">Compendium</Link></nav>
       </header>
       <ExpeditionBoard maps={maps} initialTokens={tokens} characters={characters} />

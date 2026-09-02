@@ -12,7 +12,7 @@ export async function getExpeditionBoard(): Promise<{
 }> {
   const supabase = await createClient();
   const [mapsResult, tokensResult, charactersResult] = await Promise.all([
-    supabase.from("expedition_maps").select("id, name, room_number, image_path").eq("expedition_id", FIRST_EXPEDITION_ID).order("room_number"),
+    supabase.from("expedition_maps").select("id, name, room_number, area_number, view_name, image_path").eq("expedition_id", FIRST_EXPEDITION_ID).order("room_number"),
     supabase.from("map_tokens").select("id, expedition_id, map_id, character_id, kind, label, color, x, y").eq("expedition_id", FIRST_EXPEDITION_ID).order("created_at"),
     supabase.from("characters").select("id, name").eq("campaign_id", "00000000-0000-4000-8000-000000000001").eq("status", "active").order("sort_order").order("created_at"),
   ]);
@@ -22,7 +22,14 @@ export async function getExpeditionBoard(): Promise<{
   if (charactersResult.error) throw new Error(`Unable to load expedition characters: ${charactersResult.error.message}`);
 
   return {
-    maps: mapsResult.data.map((map) => ({ id: map.id, name: map.name, roomNumber: map.room_number, imagePath: map.image_path })),
+    maps: mapsResult.data.map((map) => ({
+      id: map.id,
+      name: map.name,
+      roomNumber: map.room_number,
+      areaNumber: map.area_number,
+      viewName: map.view_name,
+      imagePath: map.image_path,
+    })),
     tokens: tokensResult.data.map((token) => ({
       id: token.id,
       expeditionId: token.expedition_id,

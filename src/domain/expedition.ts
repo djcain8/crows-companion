@@ -2,6 +2,8 @@ export type ExpeditionMap = {
   id: string;
   name: string;
   roomNumber: number;
+  areaNumber: number;
+  viewName: string | null;
   imagePath: string;
 };
 

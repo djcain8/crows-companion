@@ -33,6 +33,11 @@ export function ExpeditionBoard({ maps, initialTokens, characters }: {
   const mapRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; pointerId: number } | null>(null);
   const activeMap = maps.find((map) => map.id === activeMapId) ?? maps[0];
+  const areas = Array.from(new Set(maps.map((map) => map.areaNumber))).map((areaNumber) => ({
+    areaNumber,
+    maps: maps.filter((map) => map.areaNumber === areaNumber),
+  }));
+  const activeArea = areas.find((area) => area.maps.some((map) => map.id === activeMapId)) ?? areas[0];
   const activeTokens = tokens.filter((token) => token.mapId === activeMapId);
   const activeEnemies = activeTokens.filter((token) => token.kind === "enemy");
 
@@ -143,12 +148,20 @@ export function ExpeditionBoard({ maps, initialTokens, characters }: {
   return (
     <div className="expedition-workspace">
       <div className="room-tabs" role="tablist" aria-label="Expedition rooms">
-        {maps.map((map) => (
-          <button className={map.id === activeMapId ? "active" : ""} role="tab" aria-selected={map.id === activeMapId} onClick={() => { setActiveMapId(map.id); setSelectedTokenId(null); }} key={map.id}>
-            <span>{map.name}</span><small>{tokens.filter((token) => token.mapId === map.id).length} markers</small>
+        {areas.map((area) => {
+          const representative = area.maps[0];
+          const isActive = area.areaNumber === activeArea?.areaNumber;
+          const markerCount = area.maps.reduce((count, map) => count + tokens.filter((token) => token.mapId === map.id).length, 0);
+          return <button className={isActive ? "active" : ""} role="tab" aria-selected={isActive} onClick={() => { setActiveMapId(representative.id); setSelectedTokenId(null); }} key={area.areaNumber}>
+            <span><b>{area.areaNumber}</b> {representative.name}</span><small>{markerCount} markers</small>
           </button>
-        ))}
+        })}
       </div>
+
+      {activeArea && activeArea.maps.length > 1 && <div className="map-view-tabs" aria-label={`${activeArea.maps[0].name} floor`}>
+        <span>Floor</span>
+        {activeArea.maps.map((map) => <button className={map.id === activeMapId ? "active" : ""} onClick={() => { setActiveMapId(map.id); setSelectedTokenId(null); }} key={map.id}>{map.viewName}</button>)}
+      </div>}
 
       <div className="map-toolbar">
         <div className="crow-spawners"><span>Place a Crow</span>{characters.map((character) => <button style={{ "--token-color": character.color } as CSSProperties} onClick={() => addCharacter(character)} key={character.id}>{character.name}</button>)}</div>
