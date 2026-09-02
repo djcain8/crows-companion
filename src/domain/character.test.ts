@@ -35,7 +35,7 @@ describe("character form parsing", () => {
     expect(isBackground("Cartographer!!!")).toBe(false);
   });
 
-  it("normalizes inventory to the fixed playtest slots", () => {
+  it("migrates legacy text slots into structured one-slot custom items", () => {
     const inventory = normalizeInventory({
       hands: [{ item: " Sword ", wound: true }],
       backpack: [null, { item: null, wound: true }],
@@ -44,8 +44,10 @@ describe("character form parsing", () => {
     expect(inventory.hands).toHaveLength(2);
     expect(inventory.belt).toHaveLength(4);
     expect(inventory.backpack).toHaveLength(10);
-    expect(inventory.hands[0]).toEqual({ item: "Sword", wound: false });
-    expect(inventory.backpack[1]).toEqual({ item: null, wound: true });
+    expect(inventory).toMatchObject({ version: 2, storage: { townChest: [], unassigned: [] } });
+    expect(inventory.hands[0]).toEqual({ itemId: "legacy-hands-1", wound: false });
+    expect(inventory.items[0]).toEqual({ id:"legacy-hands-1", catalogId:null, name:"Sword", quantity:1, slots:1, stackLimit:1, description:null, valueGc:null, contentsGc:null, notes:null });
+    expect(inventory.backpack[1]).toEqual({ itemId: null, wound: true });
   });
 
   it("penalizes Speed once for each backpack slot containing loot and a Wound", () => {
@@ -57,5 +59,23 @@ describe("character form parsing", () => {
     ] });
 
     expect(inventorySpeedPenalty(inventory)).toBe(2);
+  });
+
+  it("normalizes structured inventory and enforces one storage location", () => {
+    const inventory = normalizeInventory({
+      version: 2,
+      items: [
+        { id:"rope", catalogId:"rope", name:"Rope", quantity:1, slots:1, stackLimit:1 },
+        { id:"torch", catalogId:"torch", name:"Torch", quantity:2, slots:1, stackLimit:2 },
+        { id:"gem", catalogId:null, name:"Strange Gem", quantity:1, slots:1, stackLimit:1 },
+      ],
+      hands: [{ itemId:"rope" }],
+      storage: { townChest:["rope", "torch"], unassigned:["torch", "gem", "missing"] },
+    });
+
+    expect(inventory.hands[0].itemId).toBe("rope");
+    expect(inventory.storage.townChest).toEqual(["torch"]);
+    expect(inventory.storage.unassigned).toEqual(["gem"]);
+    expect(inventory.items.find((item) => item.id === "torch")?.quantity).toBe(2);
   });
 });

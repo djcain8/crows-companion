@@ -11,28 +11,23 @@ import {
   parseTraits,
   isBackground,
   inventorySlotCounts,
+  emptyInventory,
   type CharacterInventory,
-  type InventorySlot,
   type CharacterStatus,
 } from "@/domain/character";
+import { rebuildCarriedInventory, type InventoryDraft } from "@/domain/inventory";
 import { createClient } from "@/lib/supabase/server";
 
 const GADWICK_CAMPAIGN_ID = "00000000-0000-4000-8000-000000000001";
 
-function inventorySlots(formData: FormData, group: keyof typeof inventorySlotCounts): InventorySlot[] {
-  return Array.from({ length: inventorySlotCounts[group] }, (_, index) => {
-    const item = optionalText(formData.get(`inventory_${group}_${index}`));
-    const wound = group === "backpack" && formData.get(`inventory_${group}_${index}_wound`) === "on";
-    return { item, wound };
-  });
-}
-
-function inventoryValues(formData: FormData): CharacterInventory {
-  return {
-    hands: inventorySlots(formData, "hands"),
-    belt: inventorySlots(formData, "belt"),
-    backpack: inventorySlots(formData, "backpack"),
-  };
+function inventoryValues(formData: FormData, current: CharacterInventory): CharacterInventory {
+  const draft = Object.fromEntries((["hands", "belt", "backpack"] as const).map((group) => [group,
+    Array.from({ length:inventorySlotCounts[group] }, (_, index) => ({
+      name:optionalText(formData.get(`inventory_${group}_${index}`)),
+      wound:group === "backpack" && formData.get(`inventory_${group}_${index}_wound`) === "on",
+    })),
+  ])) as InventoryDraft;
+  return rebuildCarriedInventory(current, draft);
 }
 
 function boundedInteger(formData: FormData, name: string, fallback: number, min: number, max: number) {
@@ -103,7 +98,7 @@ export async function createCharacter(formData: FormData) {
   try {
     const values = characterValues(formData);
     const supabase = await createClient();
-    const { error } = await supabase.from("characters").insert({ campaign_id: GADWICK_CAMPAIGN_ID, ...values });
+    const { error } = await supabase.from("characters").insert({ campaign_id: GADWICK_CAMPAIGN_ID, inventory: emptyInventory(), ...values });
     if (error) throw new Error(`Unable to create character: ${error.message}`);
   } catch (error) {
     redirectFailure(error);
@@ -138,12 +133,12 @@ export async function deleteCharacter(characterId: string) {
   finishMutation("Character deleted.");
 }
 
-export async function updatePlaySheet(characterId: string, staminaMax: number, formData: FormData) {
+export async function updatePlaySheet(characterId: string, staminaMax: number, currentInventory: CharacterInventory, formData: FormData) {
   try {
     const values = {
       stamina_current: boundedInteger(formData, "stamina_current", staminaMax, 0, staminaMax),
       gold_gc: boundedInteger(formData, "gold_gc", 0, 0, 999999999),
-      inventory: inventoryValues(formData),
+      inventory: inventoryValues(formData, currentInventory),
     };
     const supabase = await createClient();
     const { error } = await supabase
