@@ -36,4 +36,5 @@ describe("equipment catalog", () => {
     }
     expect(equipmentById.get("warpick")).toMatchObject({ slots: 2, stack: 1, priceGc: 15, attack: { roll: "2d10 + Strength", range: "Melee 1", tier2: "4 + Strength", tier3: "9 + Strength", qualities: ["Stabbing", "Brutal"] } });
   });
+
 });

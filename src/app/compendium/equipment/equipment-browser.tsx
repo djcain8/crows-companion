@@ -35,7 +35,7 @@ function EquipmentCard({ item }: { item: EquipmentEntry }) {
         </section>
       ) : null}
       {item.tags?.length ? <div className="equipment-tags">{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
-      <p>{item.summary}</p>
+      {item.summary ? <p>{item.summary}</p> : null}
       {item.rules ? <small className="equipment-rules">{item.rules}</small> : null}
     </article>
   );
