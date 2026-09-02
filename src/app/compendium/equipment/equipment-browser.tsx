@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { equipmentCategories, type EquipmentCategory, type EquipmentEntry } from "@/domain/equipment";
 
 const categoryLabels: Record<EquipmentCategory, string> = {
@@ -16,7 +17,7 @@ function EquipmentCard({ item }: { item: EquipmentEntry }) {
     <article className={`equipment-card category-${item.category}`}>
       <header>
         <div><span>{categoryLabels[item.category]}</span><h2>{item.name}</h2></div>
-        <strong>{item.priceGc === null ? "Currency" : `${item.priceGc.toLocaleString()} gc`}</strong>
+        {item.priceGc === null ? <strong>Currency</strong> : <strong className="equipment-price">{item.priceGc.toLocaleString()}<Image src="/icons/gold-coin.png" alt="gold coins" width={20} height={20} /></strong>}
       </header>
       <div className="equipment-card-stats">
         <span><small>Slots</small><b>{item.slots}</b></span>
