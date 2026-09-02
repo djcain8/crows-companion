@@ -15,6 +15,7 @@ import {
   type CharacterStatus,
 } from "@/domain/character";
 import { inventoryPlacementErrors } from "@/domain/inventory-placement";
+import { startingInventoryForBackground } from "@/domain/background-grants";
 import { createClient } from "@/lib/supabase/server";
 
 const GADWICK_CAMPAIGN_ID = "00000000-0000-4000-8000-000000000001";
@@ -95,15 +96,19 @@ function redirectFailure(error: unknown): never {
 }
 
 export async function createCharacter(formData: FormData) {
+  let characterId: string | undefined;
   try {
     const values = characterValues(formData);
+    const requestedPackage = optionalText(formData.get("starting_inventory_background"));
+    const inventory = requestedPackage && requestedPackage === values.background ? startingInventoryForBackground(requestedPackage) : emptyInventory();
     const supabase = await createClient();
-    const { error } = await supabase.from("characters").insert({ campaign_id: GADWICK_CAMPAIGN_ID, inventory: emptyInventory(), ...values });
+    const { data, error } = await supabase.from("characters").insert({ campaign_id: GADWICK_CAMPAIGN_ID, inventory, ...values }).select("id").single();
     if (error) throw new Error(`Unable to create character: ${error.message}`);
+    characterId = data.id;
   } catch (error) {
     redirectFailure(error);
   }
-  finishMutation("Crow added to Gadwick.");
+  finishMutation("Crow added to Gadwick. Starting equipment is ready to arrange.", characterId);
 }
 
 export async function updateCharacter(characterId: string, formData: FormData) {

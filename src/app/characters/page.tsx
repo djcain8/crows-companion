@@ -16,7 +16,7 @@ export default async function CharactersPage({ searchParams }: { searchParams: P
         <div>
           <p className="eyebrow">Gadwick records</p>
           <h1>The Crows</h1>
-          <p>Transcribe an existing character now. Rules-guided creation can use the same record later.</p>
+          <p>Create a Crow from a rolled background or transcribe an existing character.</p>
         </div>
         <Link href="/">Return to town</Link>
       </header>
@@ -59,7 +59,7 @@ export default async function CharactersPage({ searchParams }: { searchParams: P
       </section>
 
       <details className="new-character" open={characters.length === 0}>
-        <summary><span>+</span> Manually add a Crow</summary>
+        <summary><span>+</span> Create or add a Crow</summary>
         <CharacterForm />
       </details>
     </main>
