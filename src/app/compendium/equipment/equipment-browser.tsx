@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { equipmentCategories, type EquipmentCategory, type EquipmentEntry } from "@/domain/equipment";
+import { WeaponQualityPills } from "./weapon-quality-reference";
 
 const categoryLabels: Record<EquipmentCategory, string> = {
   gear: "Gear",
@@ -31,7 +32,7 @@ function EquipmentCard({ item }: { item: EquipmentEntry }) {
             <span><small>12–16</small><b>{item.attack.tier2}</b></span>
             <span><small>17+</small><b>{item.attack.tier3}</b></span>
           </div>
-          <p>{item.attack.qualities.join(", ")}</p>
+          <WeaponQualityPills labels={item.attack.qualities} />
         </section>
       ) : null}
       {item.tags?.length ? <div className="equipment-tags">{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div> : null}

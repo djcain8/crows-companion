@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { equipmentEntries } from "@/domain/equipment";
 import { EquipmentBrowser } from "./equipment-browser";
+import { WeaponQualityReference } from "./weapon-quality-reference";
 
 export default function EquipmentCompendiumPage() {
   return (
@@ -24,6 +25,7 @@ export default function EquipmentCompendiumPage() {
       </aside>
 
       <EquipmentBrowser equipment={equipmentEntries} />
+      <WeaponQualityReference />
     </main>
   );
 }
