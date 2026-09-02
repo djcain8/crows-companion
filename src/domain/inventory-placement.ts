@@ -1,6 +1,5 @@
 import { equipmentById } from "./equipment";
-import { inventoryItem, inventorySlotCounts, type CharacterInventory, type InventoryItem, type InventorySlot } from "./character";
-import type { InventoryGroup } from "./inventory";
+import { inventoryItem, inventorySlotCounts, type CharacterInventory, type InventoryGroup, type InventoryItem, type InventorySlot } from "./character";
 
 export const inventoryGroupColumns: Record<InventoryGroup, number> = { hands: 2, belt: 4, backpack: 5 };
 

@@ -48,6 +48,7 @@ export type CharacterInventory = {
 };
 
 export const inventorySlotCounts = { hands: 2, belt: 4, backpack: 10 } as const;
+export type InventoryGroup = keyof typeof inventorySlotCounts;
 
 export function emptyInventory(): CharacterInventory {
   return {
@@ -134,22 +135,6 @@ function normalizeStructuredInventory(source: Record<string, unknown>): Characte
   };
 }
 
-function normalizeLegacyInventory(source: Record<string, unknown>): CharacterInventory {
-  const inventory = emptyInventory();
-  for (const group of ["hands", "belt", "backpack"] as const) {
-    const entries = Array.isArray(source[group]) ? source[group] : [];
-    inventory[group] = Array.from({ length: inventorySlotCounts[group] }, (_, index) => {
-      const entry = entries[index];
-      const record = entry && typeof entry === "object" ? entry as Record<string, unknown> : {};
-      const name = cleanText(record.item);
-      const itemId = name ? `legacy-${group}-${index + 1}` : null;
-      if (name && itemId) inventory.items.push({ id:itemId, catalogId:null, name, quantity:1, slots:1, stackLimit:1, description:null, valueGc:null, contentsGc:null, notes:null });
-      return { itemId, wound: group === "backpack" && record.wound === true };
-    });
-  }
-  return inventory;
-}
-
 export function inventoryItem(inventory: CharacterInventory, itemId: string | null): InventoryItem | null {
   return itemId ? inventory.items.find((item) => item.id === itemId) ?? null : null;
 }
@@ -160,7 +145,7 @@ export function inventorySpeedPenalty(inventory: CharacterInventory): number {
 
 export function normalizeInventory(value: unknown): CharacterInventory {
   const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
-  return source.version === 2 ? normalizeStructuredInventory(source) : normalizeLegacyInventory(source);
+  return normalizeStructuredInventory(source);
 }
 
 export type CharacterRecord = {

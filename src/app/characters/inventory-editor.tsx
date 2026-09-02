@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { equipmentEntries } from "@/domain/equipment";
-import { inventoryItem, inventorySpeedPenalty, type CharacterInventory, type InventoryItem } from "@/domain/character";
+import { inventoryItem, inventorySpeedPenalty, type CharacterInventory, type InventoryGroup, type InventoryItem } from "@/domain/character";
 import { canMergeItems, canPlaceItem, deleteInventoryItem, inventoryGroupColumns, mergeItems, placeItem, requiredSlots, splitItem, storeItem, swapItems } from "@/domain/inventory-placement";
-import type { InventoryGroup } from "@/domain/inventory";
 
 const groups: { key: InventoryGroup; title: string }[] = [
   { key: "hands", title: "Hands" }, { key: "belt", title: "Belt" }, { key: "backpack", title: "Backpack" },

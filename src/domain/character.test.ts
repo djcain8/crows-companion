@@ -35,28 +35,29 @@ describe("character form parsing", () => {
     expect(isBackground("Cartographer!!!")).toBe(false);
   });
 
-  it("migrates legacy text slots into structured one-slot custom items", () => {
-    const inventory = normalizeInventory({
-      hands: [{ item: " Sword ", wound: true }],
-      backpack: [null, { item: null, wound: true }],
-    });
+  it("normalizes missing inventory as an empty structured field kit", () => {
+    const inventory = normalizeInventory(null);
 
     expect(inventory.hands).toHaveLength(2);
     expect(inventory.belt).toHaveLength(4);
     expect(inventory.backpack).toHaveLength(10);
     expect(inventory).toMatchObject({ version: 2, storage: { townChest: [], unassigned: [] } });
-    expect(inventory.hands[0]).toEqual({ itemId: "legacy-hands-1", wound: false });
-    expect(inventory.items[0]).toEqual({ id:"legacy-hands-1", catalogId:null, name:"Sword", quantity:1, slots:1, stackLimit:1, description:null, valueGc:null, contentsGc:null, notes:null });
-    expect(inventory.backpack[1]).toEqual({ itemId: null, wound: true });
+    expect(inventory.items).toEqual([]);
   });
 
   it("penalizes Speed once for each backpack slot containing loot and a Wound", () => {
-    const inventory = normalizeInventory({ backpack: [
-      { item: "Rope", wound: true },
-      { item: null, wound: true },
-      { item: "Torch", wound: false },
-      { item: "Gem", wound: true },
-    ] });
+    const inventory = normalizeInventory({
+      version: 2,
+      items: [
+        { id:"rope", name:"Rope", quantity:1, slots:1, stackLimit:1 },
+        { id:"torch", name:"Torch", quantity:1, slots:1, stackLimit:1 },
+        { id:"gem", name:"Gem", quantity:1, slots:1, stackLimit:1 },
+      ],
+      backpack: [
+        { itemId:"rope", wound:true }, { itemId:null, wound:true },
+        { itemId:"torch", wound:false }, { itemId:"gem", wound:true },
+      ],
+    });
 
     expect(inventorySpeedPenalty(inventory)).toBe(2);
   });
