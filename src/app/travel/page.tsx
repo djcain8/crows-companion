@@ -1,4 +1,5 @@
 import { PrimaryNav } from "@/components/primary-nav";
+import { TravelMap } from "./travel-map";
 
 const phases = ["Plan", "Assign", "Resolve", "Travel", "Camp & Rest"];
 
@@ -57,12 +58,7 @@ export default function TravelPage() {
 
           <aside className="travel-map-panel">
             <header><div><p>Known world</p><h2>Cornath</h2></div><span>Position known</span></header>
-            <div className="travel-map">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/maps/travel/cornath.webp" alt="Regional hex map of Cornath with Gadwick and nearby points of interest" />
-              <i className="party-map-marker" aria-label="Party at Gadwick"><span>C</span></i>
-            </div>
-            <p className="map-caption">The shared marker begins at Gadwick. Later, the Ref can hide it when the party becomes lost.</p>
+            <TravelMap />
           </aside>
         </div>
 

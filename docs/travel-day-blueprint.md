@@ -97,16 +97,16 @@ The header immediately previews planned hexes, Day EN, and Night EN.
 
 ### 2. Assign roles
 
-Each attending character can be assigned to one of:
+Each attending character can be assigned to one of four travel roles:
 
 - Supporter
 - Guide (maximum one)
 - Scout (maximum three)
 - Tracker (maximum three)
-- Assist
-- No role
 
-After a role is chosen, only that role's tasks are displayed. Task choices remain editable until their resolution begins. The interface warns about limits but does not require every traveler to take a role.
+Instead of taking a travel role, a character can **Help another Crow** by making an assist for one specific travel-role test, or **Sit this one out** and make no travel-role test. Assist is an alternative to taking a role, not a fifth role; Supporter remains a proper role with its own tasks and test.
+
+After a role is chosen, only that role's tasks are displayed. Task choices remain editable until their resolution begins. The interface warns about limits but does not require every traveler to take a role or assist someone.
 
 Assists and Support Everyone targets are represented explicitly because they modify later tests.
 
