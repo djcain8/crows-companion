@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emptyInventory } from "./character";
-import { carriedRations, clampTravelCoordinate, effectiveTravelSpeed, partyTravelSummary, speedHexAdjustment, travelPlanSummary, type TravelCharacter } from "./travel";
+import { carriedRations, clampTravelCoordinate, effectiveTravelSpeed, partyTravelSummary, speedHexAdjustment, travelAssignmentsReady, travelPlanSummary, travelRoleLimits, travelRoleTasks, type TravelAssignment, type TravelCharacter } from "./travel";
 
 function character(overrides: Partial<TravelCharacter> = {}): TravelCharacter {
   return { id: "crow-1", name: "Crow", playerName: null, status: "active", baseSpeed: 5, inventory: emptyInventory(), ...overrides };
@@ -57,5 +57,19 @@ describe("travel coordinates", () => {
     expect(clampTravelCoordinate(-1)).toBe(0.01);
     expect(clampTravelCoordinate(2)).toBe(0.99);
     expect(clampTravelCoordinate(Number.NaN)).toBe(0.5);
+  });
+});
+
+describe("travel role catalog", () => {
+  it("offers three tasks per field role with the rules limits", () => {
+    expect(Object.values(travelRoleTasks).every((tasks) => tasks.length === 3)).toBe(true);
+    expect(travelRoleLimits).toEqual({ supporter: 3, guide: 1, scout: 3, tracker: 3 });
+  });
+
+  it("requires exactly one guide and a complete choice for every traveler", () => {
+    const assignment = (characterId: string, role: TravelAssignment["role"], task: string | null): TravelAssignment => ({ id: characterId, travelDayId: "day", characterId, role, task });
+    expect(travelAssignmentsReady(["a", "b"], [assignment("a", "scout", "scout_for_danger"), assignment("b", "sit_out", null)])).toBe(false);
+    expect(travelAssignmentsReady(["a", "b"], [assignment("a", "guide", null), assignment("b", "sit_out", null)])).toBe(false);
+    expect(travelAssignmentsReady(["a", "b"], [assignment("a", "guide", "follow_normal_route"), assignment("b", "sit_out", null)])).toBe(true);
   });
 });

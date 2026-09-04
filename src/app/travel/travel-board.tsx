@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { carriedRations, effectiveTravelSpeed, partyTravelSummary, travelPlanSummary, TRAVEL_JOURNEY_ID, type TravelCharacter, type TravelDay, type TravelJourney, type TravelPace } from "@/domain/travel";
+import { carriedRations, effectiveTravelSpeed, partyTravelSummary, travelAssignmentsReady, travelPlanSummary, TRAVEL_JOURNEY_ID, type TravelAssignment, type TravelCharacter, type TravelDay, type TravelJourney, type TravelPace, type TravelRole } from "@/domain/travel";
+import { TravelAssignments } from "./travel-assignments";
 import { TravelMap } from "./travel-map";
 
 const phases = ["Plan", "Assign", "Resolve", "Travel", "Camp & Rest"];
@@ -13,11 +14,12 @@ const paceOptions: { id: TravelPace; name: string; hexes: number; encounterNumbe
   { id: "fast", name: "Fast", hexes: 3, encounterNumber: 6, modifier: "Role tests take a bane" },
 ];
 
-export function TravelBoard({ journey: initialJourney, day: initialDay, memberIds: initialMemberIds, characters }: { journey: TravelJourney; day: TravelDay; memberIds: string[]; characters: TravelCharacter[] }) {
+export function TravelBoard({ journey: initialJourney, day: initialDay, assignments: initialAssignments, memberIds: initialMemberIds, characters }: { journey: TravelJourney; day: TravelDay; assignments: TravelAssignment[]; memberIds: string[]; characters: TravelCharacter[] }) {
   const [supabase] = useState(() => createClient());
   const [journey, setJourney] = useState(initialJourney);
   const [day, setDay] = useState(initialDay);
   const [memberIds, setMemberIds] = useState(initialMemberIds);
+  const [assignments, setAssignments] = useState(initialAssignments);
   const [error, setError] = useState<string | null>(null);
   const partyDialog = useRef<HTMLDialogElement>(null);
   const summary = partyTravelSummary(characters, memberIds);
@@ -42,14 +44,21 @@ export function TravelBoard({ journey: initialJourney, day: initialDay, memberId
     setDay((current) => ({ ...current, phase: data.phase as TravelDay["phase"], pace: data.pace as TravelDay["pace"], followsRoad: data.follows_road }));
   }, [initialDay.id, supabase]);
 
+  const refreshAssignments = useCallback(async () => {
+    const { data, error: queryError } = await supabase.from("travel_assignments").select("id, travel_day_id, character_id, role, task").eq("travel_day_id", initialDay.id);
+    if (queryError) return setError(queryError.message);
+    setAssignments((data ?? []).map((assignment) => ({ id: assignment.id, travelDayId: assignment.travel_day_id, characterId: assignment.character_id, role: assignment.role as TravelRole, task: assignment.task })));
+  }, [initialDay.id, supabase]);
+
   useEffect(() => {
     const channel = supabase.channel("travel-board")
       .on("postgres_changes", { event: "*", schema: "public", table: "travel_journeys", filter: `id=eq.${TRAVEL_JOURNEY_ID}` }, refreshJourney)
       .on("postgres_changes", { event: "*", schema: "public", table: "travel_party_members", filter: `journey_id=eq.${TRAVEL_JOURNEY_ID}` }, refreshParty)
       .on("postgres_changes", { event: "*", schema: "public", table: "travel_days", filter: `id=eq.${initialDay.id}` }, refreshDay)
+      .on("postgres_changes", { event: "*", schema: "public", table: "travel_assignments", filter: `travel_day_id=eq.${initialDay.id}` }, refreshAssignments)
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [initialDay.id, refreshDay, refreshJourney, refreshParty, supabase]);
+  }, [initialDay.id, refreshAssignments, refreshDay, refreshJourney, refreshParty, supabase]);
 
   async function toggleCharacter(characterId: string) {
     setError(null);
@@ -75,8 +84,21 @@ export function TravelBoard({ journey: initialJourney, day: initialDay, memberId
     if (updateError) { setError(updateError.message); await refreshDay(); }
   }
 
+  async function assignRole(characterId: string, role: TravelRole, task: string | null = null) {
+    setError(null);
+    const current = assignments.find((assignment) => assignment.characterId === characterId);
+    const nextTask = current?.role === role ? task : null;
+    const optimistic: TravelAssignment = { id: current?.id ?? crypto.randomUUID(), travelDayId: day.id, characterId, role, task: nextTask };
+    setAssignments((all) => [...all.filter((assignment) => assignment.characterId !== characterId), optimistic]);
+    const { error: updateError } = await supabase.from("travel_assignments").upsert({ travel_day_id: day.id, character_id: characterId, role, task: nextTask, updated_at: new Date().toISOString() }, { onConflict: "travel_day_id,character_id" });
+    if (updateError) { setError(updateError.message); await refreshAssignments(); }
+  }
+
   const phaseIndex = Math.max(0, ["plan", "assign", "resolve", "travel", "rest"].indexOf(day.phase));
   const isPlanning = day.phase === "plan";
+  const isAssigning = day.phase === "assign";
+  const partyAssignments = assignments.filter((assignment) => memberIds.includes(assignment.characterId));
+  const assignmentsReady = travelAssignmentsReady(memberIds, partyAssignments);
 
   return <section className="journey-console" aria-labelledby="journey-title">
     <header className="journey-heading"><div><p>Current journey</p><h2 id="journey-title">{journey.name}</h2></div><div className="journey-day"><span>Travel day</span><strong>{day.dayNumber}</strong></div></header>
@@ -89,13 +111,22 @@ export function TravelBoard({ journey: initialJourney, day: initialDay, memberId
     </section>
     {error && <p className="travel-error" role="alert">Travel update failed: {error}</p>}
     <ol className="travel-stepper" aria-label="Travel day phases">{phases.map((phase, index) => <li className={index === phaseIndex ? "active" : index < phaseIndex ? "complete" : ""} aria-current={index === phaseIndex ? "step" : undefined} key={phase}><b>{index + 1}</b><span>{phase}</span></li>)}</ol>
-    <div className="travel-layout"><section className="phase-workspace" aria-labelledby="phase-title"><header><div><p>Phase {phaseIndex + 1} of 5</p><h2 id="phase-title">{isPlanning ? "Plan the day" : "Assign travel roles"}</h2></div><span>Day · Travel</span></header>
-      <div className="phase-section party-preview"><div><span className="section-number">01</span><div><h3>Who is traveling?</h3><p>Select attending Crows from the registry. Absent and test characters stay safely out of the day.</p></div></div><button type="button" onClick={() => partyDialog.current?.showModal()}>{summary.selected.length ? "Edit party" : "Choose party"}</button></div>
-      {summary.selected.length > 0 && <div className="selected-travelers">{summary.selected.map((crow) => <span key={crow.id}>{crow.name}<small>Speed {effectiveTravelSpeed(crow)} · {carriedRations(crow)} rations</small></span>)}</div>}
-      <div className="phase-section"><div><span className="section-number">02</span><div><h3>Choose a pace</h3><p>Pace establishes movement and both encounter numbers before the day's roles modify them.</p></div></div><div className="pace-preview" aria-label="Travel pace options">{paceOptions.map((pace) => <button className={day.pace === pace.id ? "selected" : ""} type="button" aria-pressed={day.pace === pace.id} onClick={() => updatePlan({ pace: pace.id, phase: "plan" })} key={pace.id}><span>{pace.name}</span><strong>{pace.hexes} {pace.hexes === 1 ? "hex" : "hexes"}</strong><small>EN {pace.encounterNumber} · {pace.modifier}</small></button>)}</div></div>
-      <div className="phase-section road-choice"><div><span className="section-number">03</span><div><h3>Follow a road all day?</h3><p>A road adds 1 hex, but lowers both encounter numbers by 1—faster and more dangerous.</p></div></div><button className={day.followsRoad ? "selected" : ""} type="button" aria-pressed={day.followsRoad} onClick={() => updatePlan({ followsRoad: !day.followsRoad, phase: "plan" })}><b>{day.followsRoad ? "Following road" : "Off road"}</b><small>{day.followsRoad ? "+1 hex · −1 Travel EN · −1 Rest EN" : "No road adjustments"}</small></button></div>
-      {plan && <div className="plan-breakdown" aria-live="polite"><div><span>Today's movement</span><strong>{plan.plannedHexes} {plan.plannedHexes === 1 ? "hex" : "hexes"}</strong></div><p>{plan.baseHexes} from {day.pace} pace{plan.speedAdjustment ? ` ${plan.speedAdjustment > 0 ? "+" : "−"} ${Math.abs(plan.speedAdjustment)} from Speed` : ""}{plan.roadAdjustment ? " + 1 road" : ""}.</p><small>{plan.testModifier === "edge" ? "All travel-role tests gain an edge." : plan.testModifier === "bane" ? "All travel-role tests take a bane." : "Travel-role tests have no modifier from pace."}</small></div>}
-      <footer><p>{isPlanning ? "You can revise this plan later; continuing does not lock it." : "Role and task assignment is the next implementation slice."}</p>{isPlanning ? <button type="button" disabled={!day.pace || summary.selected.length === 0} onClick={() => updatePlan({ phase: "assign" })}>Continue to assignments <span>→</span></button> : <button type="button" onClick={() => updatePlan({ phase: "plan" })}><span>←</span> Edit plan</button>}</footer></section>
+    <div className="travel-layout"><section className="phase-workspace" aria-labelledby="phase-title"><header><div><p>Phase {phaseIndex + 1} of 5</p><h2 id="phase-title">{isPlanning ? "Plan the day" : isAssigning ? "Assign travel roles" : "Resolve travel roles"}</h2></div><span>Day · Travel</span></header>
+      {isPlanning ? <>
+        <div className="phase-section party-preview"><div><span className="section-number">01</span><div><h3>Who is traveling?</h3><p>Select attending Crows from the registry. Absent and test characters stay safely out of the day.</p></div></div><button type="button" onClick={() => partyDialog.current?.showModal()}>{summary.selected.length ? "Edit party" : "Choose party"}</button></div>
+        {summary.selected.length > 0 && <div className="selected-travelers">{summary.selected.map((crow) => <span key={crow.id}>{crow.name}<small>Speed {effectiveTravelSpeed(crow)} · {carriedRations(crow)} rations</small></span>)}</div>}
+        <div className="phase-section"><div><span className="section-number">02</span><div><h3>Choose a pace</h3><p>Pace establishes movement and both encounter numbers before the day's roles modify them.</p></div></div><div className="pace-preview" aria-label="Travel pace options">{paceOptions.map((pace) => <button className={day.pace === pace.id ? "selected" : ""} type="button" aria-pressed={day.pace === pace.id} onClick={() => updatePlan({ pace: pace.id, phase: "plan" })} key={pace.id}><span>{pace.name}</span><strong>{pace.hexes} {pace.hexes === 1 ? "hex" : "hexes"}</strong><small>EN {pace.encounterNumber} · {pace.modifier}</small></button>)}</div></div>
+        <div className="phase-section road-choice"><div><span className="section-number">03</span><div><h3>Follow a road all day?</h3><p>A road adds 1 hex, but lowers both encounter numbers by 1—faster and more dangerous.</p></div></div><button className={day.followsRoad ? "selected" : ""} type="button" aria-pressed={day.followsRoad} onClick={() => updatePlan({ followsRoad: !day.followsRoad, phase: "plan" })}><b>{day.followsRoad ? "Following road" : "Off road"}</b><small>{day.followsRoad ? "+1 hex · −1 Travel EN · −1 Rest EN" : "No road adjustments"}</small></button></div>
+        {plan && <div className="plan-breakdown" aria-live="polite"><div><span>Today's movement</span><strong>{plan.plannedHexes} {plan.plannedHexes === 1 ? "hex" : "hexes"}</strong></div><p>{plan.baseHexes} from {day.pace} pace{plan.speedAdjustment ? ` ${plan.speedAdjustment > 0 ? "+" : "−"} ${Math.abs(plan.speedAdjustment)} from Speed` : ""}{plan.roadAdjustment ? " + 1 road" : ""}.</p><small>{plan.testModifier === "edge" ? "All travel-role tests gain an edge." : plan.testModifier === "bane" ? "All travel-role tests take a bane." : "Travel-role tests have no modifier from pace."}</small></div>}
+        <footer><p>You can revise this plan later; continuing does not lock it.</p><button type="button" disabled={!day.pace || summary.selected.length === 0} onClick={() => updatePlan({ phase: "assign" })}>Continue to assignments <span>→</span></button></footer>
+      </> : isAssigning ? <>
+        <div className="assignment-intro"><div><span>Resolution order</span><strong>Supporters → Guide → Scouts → Trackers</strong><small>Every party needs exactly one Guide.</small></div><button type="button" onClick={() => partyDialog.current?.showModal()}>Edit party</button></div>
+        <TravelAssignments travelers={summary.selected} assignments={partyAssignments} onAssign={assignRole} />
+        <footer><button type="button" onClick={() => updatePlan({ phase: "plan" })}><span>←</span> Edit plan</button><p>{assignmentsReady ? "Everyone has a complete assignment." : "Choose a role and task for each Crow, or mark them Sit Out."}</p><button type="button" disabled={!assignmentsReady} onClick={() => updatePlan({ phase: "resolve" })}>Continue to rolls <span>→</span></button></footer>
+      </> : <>
+        <div className="phase-placeholder"><span>Assignments ready</span><h3>The role-resolution queue comes next.</h3><p>Your assignments are saved. You can return to revise them before any rolls are recorded.</p></div>
+        <footer><button type="button" onClick={() => updatePlan({ phase: "assign" })}><span>←</span> Edit assignments</button></footer>
+      </>}</section>
       <aside className="travel-map-panel"><header><div><p>Known world</p><h2>Cornath</h2></div><span>{journey.markerVisible ? "Position known" : "Party lost"}</span></header><TravelMap markerX={journey.markerX} markerY={journey.markerY} markerVisible={journey.markerVisible} onMarkerChange={(x, y) => updateMarker({ x, y })} onVisibilityChange={(visible) => updateMarker({ visible })} /></aside></div>
     <details className="travel-day-record"><summary><span>Today's record</span><small>{plan ? `${day.pace} pace · ${plan.plannedHexes} hexes · EN ${plan.dayEncounterNumber}/${plan.restEncounterNumber}` : "No decisions recorded"}</small><i>⌄</i></summary><div><p>{plan ? `The party plans a ${day.pace} pace${day.followsRoad ? " while following a road all day" : " off road"}. Speed and road adjustments produce ${plan.plannedHexes} planned hexes.` : "Pace, roles, resolved tests, encounter checks, interruptions, and Ref notes will collect here as the day unfolds."}</p></div></details>
     <dialog className="party-dialog" ref={partyDialog} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}><header><div><p>Traveling today</p><h2>Choose the party</h2></div><button type="button" onClick={() => partyDialog.current?.close()}>Done</button></header><p>Only selected Crows affect this journey's Speed and rations. Registry status remains unchanged.</p><div>{characters.map((character) => <button className={memberIds.includes(character.id) ? "selected" : ""} type="button" onClick={() => toggleCharacter(character.id)} key={character.id}><span>{character.name}<small>{character.playerName ?? "Player not recorded"}</small></span><b>{memberIds.includes(character.id) ? "Traveling" : "Add"}</b></button>)}</div></dialog>

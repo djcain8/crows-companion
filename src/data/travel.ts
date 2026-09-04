@@ -1,6 +1,6 @@
 import { getCharacterRegistry } from "./campaigns";
 import { createClient } from "@/lib/supabase/server";
-import { TRAVEL_JOURNEY_ID, type TravelDay, type TravelJourney } from "@/domain/travel";
+import { TRAVEL_JOURNEY_ID, type TravelAssignment, type TravelDay, type TravelJourney } from "@/domain/travel";
 
 export async function getTravelBoard() {
   const supabase = await createClient();
@@ -35,5 +35,15 @@ export async function getTravelBoard() {
     followsRoad: dayResult.data.follows_road,
   };
 
-  return { journey, day, memberIds: partyResult.data.map((member) => member.character_id), characters: characters.filter((character) => character.status === "active") };
+  const assignmentResult = await supabase.from("travel_assignments").select("id, travel_day_id, character_id, role, task").eq("travel_day_id", day.id);
+  if (assignmentResult.error) throw new Error(`Unable to load travel assignments: ${assignmentResult.error.message}`);
+  const assignments: TravelAssignment[] = assignmentResult.data.map((assignment) => ({
+    id: assignment.id,
+    travelDayId: assignment.travel_day_id,
+    characterId: assignment.character_id,
+    role: assignment.role as TravelAssignment["role"],
+    task: assignment.task,
+  }));
+
+  return { journey, day, assignments, memberIds: partyResult.data.map((member) => member.character_id), characters: characters.filter((character) => character.status === "active") };
 }
