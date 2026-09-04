@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-type PrimarySection = "town" | "crows" | "compendium" | "expedition";
+type PrimarySection = "town" | "crows" | "travel" | "compendium" | "expedition";
 
 const destinations: { section: PrimarySection; href: string; label: string }[] = [
   { section: "town", href: "/", label: "Town" },
   { section: "crows", href: "/characters", label: "Crows" },
+  { section: "travel", href: "/travel", label: "Travel" },
   { section: "compendium", href: "/compendium", label: "Compendium" },
   { section: "expedition", href: "/expedition", label: "Expedition" },
 ];
