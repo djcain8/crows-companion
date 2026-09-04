@@ -14,7 +14,7 @@ export async function getTravelBoard() {
   if (partyResult.error) throw new Error(`Unable to load the traveling party: ${partyResult.error.message}`);
 
   const row = journeyResult.data;
-  const dayResult = await supabase.from("travel_days").select("id, day_number, phase").eq("id", row.current_day_id).single();
+  const dayResult = await supabase.from("travel_days").select("id, day_number, phase, pace, follows_road").eq("id", row.current_day_id).single();
   if (dayResult.error) throw new Error(`Unable to load the current travel day: ${dayResult.error.message}`);
 
   const journey: TravelJourney = {
@@ -27,7 +27,13 @@ export async function getTravelBoard() {
     markerVisible: row.marker_visible,
     currentDayId: row.current_day_id,
   };
-  const day: TravelDay = { id: dayResult.data.id, dayNumber: dayResult.data.day_number, phase: dayResult.data.phase as TravelDay["phase"] };
+  const day: TravelDay = {
+    id: dayResult.data.id,
+    dayNumber: dayResult.data.day_number,
+    phase: dayResult.data.phase as TravelDay["phase"],
+    pace: dayResult.data.pace as TravelDay["pace"],
+    followsRoad: dayResult.data.follows_road,
+  };
 
   return { journey, day, memberIds: partyResult.data.map((member) => member.character_id), characters: characters.filter((character) => character.status === "active") };
 }

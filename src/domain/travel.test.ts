@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emptyInventory } from "./character";
-import { carriedRations, clampTravelCoordinate, effectiveTravelSpeed, partyTravelSummary, type TravelCharacter } from "./travel";
+import { carriedRations, clampTravelCoordinate, effectiveTravelSpeed, partyTravelSummary, speedHexAdjustment, travelPlanSummary, type TravelCharacter } from "./travel";
 
 function character(overrides: Partial<TravelCharacter> = {}): TravelCharacter {
   return { id: "crow-1", name: "Crow", playerName: null, status: "active", baseSpeed: 5, inventory: emptyInventory(), ...overrides };
@@ -27,6 +27,28 @@ describe("travel party summaries", () => {
     const slow = character({ id: "slow", baseSpeed: 5, inventory: slowInventory });
     expect(effectiveTravelSpeed(slow)).toBe(4);
     expect(partyTravelSummary([fast, slow], [fast.id, slow.id]).lowestSpeed).toBe(4);
+  });
+
+  it("applies each Speed band to daily movement", () => {
+    expect(speedHexAdjustment(3)).toBe(-1);
+    expect(speedHexAdjustment(4)).toBe(0);
+    expect(speedHexAdjustment(7)).toBe(1);
+    expect(speedHexAdjustment(10)).toBe(2);
+    expect(speedHexAdjustment(null)).toBe(0);
+  });
+
+  it("combines pace, Speed, and a full day on the road", () => {
+    expect(travelPlanSummary("normal", 7, true)).toEqual({
+      baseHexes: 2,
+      speedAdjustment: 1,
+      roadAdjustment: 1,
+      plannedHexes: 4,
+      dayEncounterNumber: 6,
+      restEncounterNumber: 6,
+      testModifier: null,
+    });
+    expect(travelPlanSummary("slow", 3, false)?.plannedHexes).toBe(0);
+    expect(travelPlanSummary(null, 7, true)).toBeNull();
   });
 });
 

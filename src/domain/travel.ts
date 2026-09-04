@@ -13,7 +13,15 @@ export type TravelJourney = {
   currentDayId: string;
 };
 
-export type TravelDay = { id: string; dayNumber: number; phase: "plan" | "assign" | "resolve" | "travel" | "rest" | "complete" };
+export type TravelPace = "slow" | "normal" | "fast";
+
+export type TravelDay = {
+  id: string;
+  dayNumber: number;
+  phase: "plan" | "assign" | "resolve" | "travel" | "rest" | "complete";
+  pace: TravelPace | null;
+  followsRoad: boolean;
+};
 
 export type TravelCharacter = Pick<CharacterRecord, "id" | "name" | "playerName" | "status" | "baseSpeed" | "inventory">;
 
@@ -34,6 +42,36 @@ export function partyTravelSummary(characters: TravelCharacter[], memberIds: str
     totalRations,
     restsRemaining: selected.length ? totalRations / selected.length : null,
     lowestSpeed: selected.length ? Math.min(...selected.map(effectiveTravelSpeed)) : null,
+  };
+}
+
+const paceRules: Record<TravelPace, { hexes: number; encounterNumber: number; testModifier: "edge" | "bane" | null }> = {
+  slow: { hexes: 1, encounterNumber: 8, testModifier: "edge" },
+  normal: { hexes: 2, encounterNumber: 7, testModifier: null },
+  fast: { hexes: 3, encounterNumber: 6, testModifier: "bane" },
+};
+
+export function speedHexAdjustment(lowestSpeed: number | null): number {
+  if (lowestSpeed === null) return 0;
+  if (lowestSpeed <= 3) return -1;
+  if (lowestSpeed >= 10) return 2;
+  if (lowestSpeed >= 7) return 1;
+  return 0;
+}
+
+export function travelPlanSummary(pace: TravelPace | null, lowestSpeed: number | null, followsRoad: boolean) {
+  if (!pace) return null;
+  const rule = paceRules[pace];
+  const speedAdjustment = speedHexAdjustment(lowestSpeed);
+  const roadAdjustment = followsRoad ? 1 : 0;
+  return {
+    baseHexes: rule.hexes,
+    speedAdjustment,
+    roadAdjustment,
+    plannedHexes: Math.max(0, rule.hexes + speedAdjustment + roadAdjustment),
+    dayEncounterNumber: rule.encounterNumber - roadAdjustment,
+    restEncounterNumber: rule.encounterNumber - roadAdjustment,
+    testModifier: rule.testModifier,
   };
 }
 
