@@ -8,6 +8,23 @@ Make the normal overland-travel procedure unmistakable without making the app th
 
 The first version uses physical dice. It records final totals and outcomes but does not generate rolls or automate random-encounter tables.
 
+## Presentation north star
+
+The structured grid is intentionally the V0 presentation. It can teach an unfamiliar procedure, make relationships explicit, and reveal which information actually deserves permanent screen space.
+
+The mature Travel experience should become more environmental and map-forward: the landscape occupies most of the screen while compact, distinctive controls live around its edges, similar to an immersive game HUD. Party survival, rations, encounter risk, characters, and the current decision should remain close at hand without permanently covering the journey itself.
+
+That evolution must be earned rather than assumed:
+
+- Establish recognizable iconography through repeated icon-and-label use before considering icon-only controls.
+- Reveal detailed rules and calculations on demand through drawers, overlays, or contextual panels.
+- Let inactive workflow UI recede while keeping the current decision and urgent survival pressure visible.
+- Preserve a labeled, highly legible mode on small screens and for players still learning the procedure.
+- Prefer the map and campaign art as the visual center once the workflow has proven understandable in play.
+- Never trade clarity, accessibility, or obvious interaction targets for atmosphere alone.
+
+The goal is progressive reduction: start explicit, observe what players learn, and allow mastered structure to fade into a distinctive HUD without changing the underlying workflow.
+
 ## Navigation and terminology
 
 Travel is a top-level section placed between Crows and Compendium in the primary navigation:
