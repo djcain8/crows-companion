@@ -1,5 +1,6 @@
 import { getCampaignOverview } from "@/data/campaigns";
 import { calculatePooledGold, type CampaignOverview, type InstitutionSummary } from "@/domain/campaign";
+import { PrimaryNav } from "@/components/primary-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -59,12 +60,7 @@ function Town({ campaign }: { campaign: CampaignOverview }) {
           <span className="crow-mark" aria-hidden="true">C</span>
           <div><p>Crows Companion</p><strong>Castle {campaign.villageName}</strong></div>
         </div>
-        <nav aria-label="Primary navigation">
-          <a className="active" href="#town">Town</a>
-          <a href="/characters">Crows</a>
-          <a href="/compendium">Compendium</a>
-          <a href="/expedition">Expedition</a>
-        </nav>
+        <PrimaryNav current="town" />
       </header>
 
       <section className="town-stage" id="town">

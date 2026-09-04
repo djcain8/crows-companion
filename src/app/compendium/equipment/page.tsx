@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { equipmentEntries } from "@/domain/equipment";
+import { PrimaryNav } from "@/components/primary-nav";
 import { EquipmentBrowser } from "./equipment-browser";
 import { WeaponQualityReference } from "./weapon-quality-reference";
 
@@ -8,7 +9,7 @@ export default function EquipmentCompendiumPage() {
     <main className="compendium-shell">
       <header className="compendium-header">
         <div><p className="eyebrow">Player quick reference</p><h1>Equipment</h1><p>Starting gear, weapons, armor, alchemy items, and spellbooks from the public playtest inventory cards.</p></div>
-        <nav><Link href="/">Town</Link><Link href="/characters">Crows</Link><Link href="/expedition">Expedition</Link></nav>
+        <PrimaryNav current="compendium" />
       </header>
 
       <nav className="compendium-tabs" aria-label="Compendium categories">

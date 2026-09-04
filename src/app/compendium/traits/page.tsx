@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { startingTraitEntries } from "@/domain/compendium";
+import { PrimaryNav } from "@/components/primary-nav";
 import { TraitBrowser } from "./trait-browser";
 
 export default function StartingTraitsPage() {
@@ -7,7 +8,7 @@ export default function StartingTraitsPage() {
     <main className="compendium-shell">
       <header className="compendium-header">
         <div><p className="eyebrow">Player quick reference</p><h1>Compendium</h1><p>Starting Traits granted by the 36 Backgrounds in the August–September 2026 public playtest.</p></div>
-        <nav><Link href="/">Town</Link><Link href="/characters">Crows</Link><Link href="/expedition">Expedition</Link></nav>
+        <PrimaryNav current="compendium" />
       </header>
       <nav className="compendium-tabs" aria-label="Compendium categories">
         <Link href="/compendium">Backgrounds <small>36</small></Link>

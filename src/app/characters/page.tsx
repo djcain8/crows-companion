@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { getCharacterRegistry } from "@/data/campaigns";
+import { PrimaryNav } from "@/components/primary-nav";
 import { CharacterForm } from "./character-form";
 import { PlaySheet } from "./play-sheet";
 import { DeleteCharacterButton } from "./delete-character-button";
@@ -18,7 +18,7 @@ export default async function CharactersPage({ searchParams }: { searchParams: P
           <h1>The Crows</h1>
           <p>Create a Crow from a rolled background or transcribe an existing character.</p>
         </div>
-        <Link href="/">Return to town</Link>
+        <PrimaryNav current="crows" />
       </header>
 
       {params.notice && <p className="notice" role="status">{params.notice}</p>}
